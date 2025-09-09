@@ -1,0 +1,154 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        llvm-version: [17, 18]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install LLVM and Clang
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh ${{ matrix.llvm-version }}
+
+        # Install development packages
+        sudo apt-get update
+        sudo apt-get install -y \
+          llvm-${{ matrix.llvm-version }}-dev \
+          clang-${{ matrix.llvm-version }} \
+          clang-tidy-${{ matrix.llvm-version }} \
+          libclang-${{ matrix.llvm-version }}-dev \
+          cmake \
+          build-essential
+
+    - name: Set up environment
+      run: |
+        echo "/usr/lib/llvm-${{ matrix.llvm-version }}/bin" >> $GITHUB_PATH
+        echo "LLVM_DIR=/usr/lib/llvm-${{ matrix.llvm-version }}/lib/cmake/llvm" >> $GITHUB_ENV
+        echo "Clang_DIR=/usr/lib/llvm-${{ matrix.llvm-version }}/lib/cmake/clang" >> $GITHUB_ENV
+
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DLLVM_DIR=$LLVM_DIR \
+          -DClang_DIR=$Clang_DIR \
+          -DCMAKE_CXX_COMPILER=clang++-${{ matrix.llvm-version }}
+
+    - name: Build plugin
+      run: |
+        cd build
+        make -j$(nproc)
+
+    - name: Verify plugin
+      run: |
+        ls -la build/
+        file build/clang-tidy-eigen.so
+
+        # Test that the plugin can be loaded
+        echo "int main(){return 0;}" > test.cpp
+        clang-tidy-${{ matrix.llvm-version }} \
+          -load ./build/clang-tidy-eigen.so \
+          -list-checks \
+          | grep -q "eigen-avoid-auto" || (echo "Check not found!" && exit 1)
+        rm test.cpp
+
+    - name: Run tests
+      run: |
+        cd tests
+        # Use the versioned clang-tidy
+        sed -i 's/clang-tidy /clang-tidy-${{ matrix.llvm-version }} /g' run.sh
+        ./run.sh
+
+    - name: Test example project
+      run: |
+        cd example/mini
+        echo "Testing example with mock Eigen..."
+        clang-tidy-${{ matrix.llvm-version }} \
+          -load ../../build/clang-tidy-eigen.so \
+          -checks='-*,eigen-avoid-auto' \
+          main.cpp \
+          -- -std=c++17 -DMOCK_EIGEN \
+          | tee output.log
+
+        # Check that we got some warnings
+        if grep -q "eigen-avoid-auto" output.log; then
+          echo "✓ Found expected warnings in example"
+        else
+          echo "✗ No warnings found in example"
+          exit 1
+        fi
+
+  build-with-eigen:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh 17
+
+        sudo apt-get update
+        sudo apt-get install -y \
+          llvm-17-dev \
+          clang-17 \
+          clang-tidy-17 \
+          libclang-17-dev \
+          libeigen3-dev \
+          cmake \
+          build-essential
+
+    - name: Build with real Eigen
+      run: |
+        export PATH="/usr/lib/llvm-17/bin:$PATH"
+        export LLVM_DIR=/usr/lib/llvm-17/lib/cmake/llvm
+        export Clang_DIR=/usr/lib/llvm-17/lib/cmake/clang
+
+        mkdir build
+        cd build
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DLLVM_DIR=$LLVM_DIR \
+          -DClang_DIR=$Clang_DIR \
+          -DCMAKE_CXX_COMPILER=clang++-17
+        make -j$(nproc)
+
+    - name: Test with real Eigen
+      run: |
+        cd example/mini
+        echo "Testing example with real Eigen..."
+        clang-tidy-17 \
+          -load ../../build/clang-tidy-eigen.so \
+          -checks='-*,eigen-avoid-auto' \
+          main.cpp \
+          -- -std=c++17 -I/usr/include/eigen3 \
+          | tee output.log
+
+        # Check that we got warnings for the bad cases
+        warning_count=$(grep -c "eigen-avoid-auto" output.log || true)
+        echo "Found $warning_count warnings"
+
+        if [ "$warning_count" -gt 0 ]; then
+          echo "✓ Found expected warnings with real Eigen"
+        else
+          echo "✗ No warnings found with real Eigen"
+          cat output.log
+          exit 1
+        fi
