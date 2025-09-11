@@ -59,37 +59,64 @@ jobs:
         ls -la build/
         file build/clang-tidy-eigen.so
 
-        # Test that the plugin can be loaded
-        echo "int main(){return 0;}" > test.cpp
-        clang-tidy-${{ matrix.llvm-version }} \
-          -load ./build/clang-tidy-eigen.so \
-          -list-checks \
-          | grep -q "eigen-avoid-auto" || (echo "Check not found!" && exit 1)
+        # Test that the plugin can be loaded and check works
+        echo "namespace Eigen { template<class T, int R, int C> class Matrix {}; }" > test.cpp
+        echo "void test() { using namespace Eigen; Matrix<double,-1,-1> m; auto x = m; }" >> test.cpp
+
+        if clang-tidy-${{ matrix.llvm-version }} \
+          --load ./build/clang-tidy-eigen.so \
+          --checks='-*,eigen-avoid-auto' \
+          test.cpp -- -std=c++17 2>&1 | grep -q "eigen-avoid-auto"; then
+          echo "✓ Plugin loads successfully and check works"
+        else
+          echo "✗ Plugin test failed"
+          exit 1
+        fi
         rm test.cpp
 
     - name: Run tests
       run: |
-        cd tests
-        # Use the versioned clang-tidy
-        sed -i 's/clang-tidy /clang-tidy-${{ matrix.llvm-version }} /g' run.sh
-        ./run.sh
+        # Test the plugin with our test cases
+        echo "Running plugin tests..."
+        clang-tidy-${{ matrix.llvm-version }} \
+          --load ./build/clang-tidy-eigen.so \
+          --checks='-*,eigen-avoid-auto' \
+          test_cases.cpp \
+          -- -std=c++17 \
+          | tee test_output.log
+
+        # Verify we get expected warnings (at least 3)
+        warning_count=$(grep -c "eigen-avoid-auto" test_output.log || true)
+        echo "Found $warning_count warnings"
+
+        if [ "$warning_count" -ge 3 ]; then
+          echo "✓ Test passed: Found expected warnings"
+        else
+          echo "✗ Test failed: Expected at least 3 warnings, got $warning_count"
+          cat test_output.log
+          exit 1
+        fi
 
     - name: Test example project
       run: |
         cd example/mini
         echo "Testing example with mock Eigen..."
         clang-tidy-${{ matrix.llvm-version }} \
-          -load ../../build/clang-tidy-eigen.so \
-          -checks='-*,eigen-avoid-auto' \
+          --load ../../build/clang-tidy-eigen.so \
+          --checks='-*,eigen-avoid-auto' \
           main.cpp \
           -- -std=c++17 -DMOCK_EIGEN \
           | tee output.log
 
         # Check that we got some warnings
-        if grep -q "eigen-avoid-auto" output.log; then
+        warning_count=$(grep -c "eigen-avoid-auto" output.log || true)
+        echo "Found $warning_count warnings in example"
+
+        if [ "$warning_count" -gt 0 ]; then
           echo "✓ Found expected warnings in example"
         else
           echo "✗ No warnings found in example"
+          cat output.log
           exit 1
         fi
 
@@ -135,15 +162,15 @@ jobs:
         cd example/mini
         echo "Testing example with real Eigen..."
         clang-tidy-17 \
-          -load ../../build/clang-tidy-eigen.so \
-          -checks='-*,eigen-avoid-auto' \
+          --load ../../build/clang-tidy-eigen.so \
+          --checks='-*,eigen-avoid-auto' \
           main.cpp \
           -- -std=c++17 -I/usr/include/eigen3 \
           | tee output.log
 
         # Check that we got warnings for the bad cases
         warning_count=$(grep -c "eigen-avoid-auto" output.log || true)
-        echo "Found $warning_count warnings"
+        echo "Found $warning_count warnings with real Eigen"
 
         if [ "$warning_count" -gt 0 ]; then
           echo "✓ Found expected warnings with real Eigen"
