@@ -23,4 +23,3 @@ add_definitions(${LLVM_DEFINITIONS_LIST})
 include_directories(eigen_tidy_plugin)
 
 add_subdirectory(eigen_tidy_plugin)
-add_subdirectory(example)
