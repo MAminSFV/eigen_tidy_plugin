@@ -88,16 +88,16 @@ The plugin can be tested using the provided test files:
 
 ```bash
 # Test with the basic test cases
-clang-tidy --load ./build/clang-tidy-eigen.so --checks='-*,eigen-avoid-auto' \
+clang-tidy --load ./build/eigen_tidy_plugin.so --checks='-*,eigen-avoid-auto' \
     test_cases.cpp -- -std=c++17
 
 # Test with the example project (using mock Eigen)
 cd example/mini
-clang-tidy --load ../../build/clang-tidy-eigen.so --checks='-*,eigen-avoid-auto' \
+clang-tidy --load ../../build/eigen_tidy_plugin.so --checks='-*,eigen-avoid-auto' \
     main.cpp -- -std=c++17 -DMOCK_EIGEN
 
 # Test with real Eigen (if installed)
-clang-tidy --load ../../build/clang-tidy-eigen.so --checks='-*,eigen-avoid-auto' \
+clang-tidy --load ../../build/eigen_tidy_plugin.so --checks='-*,eigen-avoid-auto' \
     main.cpp -- -std=c++17 -I/usr/include/eigen3
 
 # Run the automated test script
@@ -133,12 +133,12 @@ If clang-tidy can't find the `eigen-avoid-auto` check:
 # Verify the plugin loads correctly by testing it
 echo "namespace Eigen { template<class T, int R, int C> class Matrix {}; }" > test.cpp
 echo "void test() { using namespace Eigen; Matrix<double,-1,-1> m; auto x = m; }" >> test.cpp
-clang-tidy --load ./build/clang-tidy-eigen.so --checks='-*,eigen-avoid-auto' test.cpp -- -std=c++17
+clang-tidy --load ./build/eigen_tidy_plugin.so --checks='-*,eigen-avoid-auto' test.cpp -- -std=c++17
 rm test.cpp
 
 # Check that the .so file was built
-ls -la build/clang-tidy-eigen.so
-file build/clang-tidy-eigen.so  # Should show it's a shared library
+ls -la build/eigen_tidy_plugin.so
+file build/eigen_tidy_plugin.so  # Should show it's a shared library
 ```
 
 ## License

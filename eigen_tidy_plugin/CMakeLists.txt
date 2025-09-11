@@ -1,11 +1,11 @@
 # Create the plugin as a MODULE library
-add_library(clang-tidy-eigen MODULE
+add_library(eigen_tidy_plugin MODULE
     avoid_auto_check.cpp
     eigen_module.cpp
 )
 
 # Link against required libraries
-target_link_libraries(clang-tidy-eigen
+target_link_libraries(eigen_tidy_plugin
     clangTidy
     clangTidyUtils
     clangAST
@@ -24,7 +24,7 @@ target_link_libraries(clang-tidy-eigen
 )
 
 # Ensure the plugin doesn't have a lib prefix and uses .so extension
-set_target_properties(clang-tidy-eigen PROPERTIES
+set_target_properties(eigen_tidy_plugin PROPERTIES
     PREFIX ""
     SUFFIX ".so"
 )

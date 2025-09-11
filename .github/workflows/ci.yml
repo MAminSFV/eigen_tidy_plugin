@@ -31,7 +31,7 @@ jobs:
         cd example/mini
         echo "Testing example with mock Eigen..."
         clang-tidy-${{ matrix.llvm-version }} \
-          --load ../../build/clang-tidy-eigen.so \
+          --load ../../build/eigen_tidy_plugin.so \
           --checks='-*,eigen-avoid-auto' \
           main.cpp \
           -- -std=c++17 -DMOCK_EIGEN \
@@ -91,7 +91,7 @@ jobs:
         cd example/mini
         echo "Testing example with real Eigen..."
         clang-tidy-17 \
-          --load ../../build/clang-tidy-eigen.so \
+          --load ../../build/eigen_tidy_plugin.so \
           --checks='-*,eigen-avoid-auto' \
           main.cpp \
           -- -std=c++17 -I/usr/include/eigen3 \
