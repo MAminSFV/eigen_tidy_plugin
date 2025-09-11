@@ -1,103 +1,35 @@
-# clang-tidy-eigen-avoid-auto
+# My Tidy Plugin
 
-A clang-tidy plugin providing the `eigen-avoid-auto` check that diagnoses usage of `auto` with Eigen types and expressions.
+A clang-tidy plugin for checking Eigen code.
 
 ## Overview
 
-This plugin implements a clang-tidy check that warns against using `auto` for Eigen types or expressions, helping developers avoid common pitfalls related to expression templates and temporary objects in Eigen code.
-
-### What it detects:
-
-- ✅ `auto` with Eigen plain objects: `auto m = matrix;`
-- ✅ `auto` with Eigen expressions: `auto result = m1 + m2;`
-- ✅ `const auto` with Eigen types: `const auto m = matrix;`
-- ✅ `auto&` with Eigen types: `auto& ref = matrix;`
-- ✅ `decltype(auto)` with Eigen types: `decltype(auto) m = matrix;`
-
-### What it allows:
-
-- ✅ Explicit Eigen types: `Eigen::MatrixXd m = matrix;`
-- ✅ `auto` with `.eval()` calls: `auto m = (expr).eval();`
-- ✅ `auto` with non-Eigen types: `auto x = 42;`
-- ✅ Range-based for loops (configurable): `for (auto& m : matrices)`
-
-## The Problem
-
-As documented in [Eigen's pitfalls page](https://libeigen.gitlab.io/eigen/docs-nightly/TopicPitfalls.html), using `auto` with Eigen can lead to performance issues and bugs due to expression templates:
-
-```cpp
-// Problematic - stores expression template, not the result
-auto m = matrix1 + matrix2;  // Warning: eigen-avoid-auto
-
-// Better - explicit type forces evaluation
-Eigen::MatrixXd m = matrix1 + matrix2;  // OK
-
-// Or use .eval() to force evaluation
-auto m = (matrix1 + matrix2).eval();    // OK
-```
+This plugin provides a clang-tidy check `eigen-avoid-auto` to avoid using `auto` with Eigen types.
 
 ## Building
 
 ### Prerequisites
 
-- CMake 3.16+
-- LLVM/Clang 15+ (17+ recommended, 18+ tested)
-- C++17 compiler
-
-#### Installing LLVM/Clang on Ubuntu
-
-```bash
-# Install LLVM 18 (recommended)
-wget https://apt.llvm.org/llvm.sh
-chmod +x llvm.sh
-sudo ./llvm.sh 18
-
-# Install development packages
-sudo apt-get install -y \
-    llvm-18-dev \
-    clang-18 \
-    clang-tidy-18 \
-    libclang-18-dev \
-    cmake \
-    build-essential
-```
+- CMake
+- LLVM/Clang
 
 ### Build Steps
 
 ```bash
-mkdir build && cd build
-cmake .. -DCMAKE_PREFIX_PATH=/path/to/llvm
-make -j$(nproc)
+./scripts/build.sh
 ```
 
-### Using with clang-tidy
+## Running
+
+To run the tests:
 
 ```bash
-# Load the plugin and run the check
-clang-tidy --load ./build/clang-tidy-eigen.so --checks='-*,eigen-avoid-auto' file.cpp
-
-# With C++ standard and include paths
-clang-tidy --load ./build/clang-tidy-eigen.so --checks='-*,eigen-avoid-auto' \
-    file.cpp -- -std=c++17 -I/usr/include/eigen3
-
-# Configure options via .clang-tidy file (recommended)
-clang-tidy --load ./build/clang-tidy-eigen.so --checks='-*,eigen-avoid-auto' file.cpp
-
-# Or configure inline (less readable)
-clang-tidy --load ./build/clang-tidy-eigen.so --checks='-*,eigen-avoid-auto' \
-    --config="{CheckOptions: [{key: eigen-avoid-auto.AllowInRangeFor, value: true}]}" \
-    file.cpp
+./scripts/run.sh
 ```
 
-## Check Configuration
+## CI
 
-The `eigen-avoid-auto` check supports several options:
-
-- **AllowInRangeFor** (bool, default: false): Allow `auto` in range-based for loops
-- **OnlyExpressions** (bool, default: false): Only warn for expression templates, not plain Eigen objects
-- **BanDecltypeAuto** (bool, default: true): Also warn for `decltype(auto)`
-
-### Example .clang-tidy Configuration
+This project uses GitHub Actions for CI. The configuration is in `.github/workflows/ci.yml`.
 
 ```yaml
 Checks: 'eigen-avoid-auto'

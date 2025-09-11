@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(clang-tidy-eigen-avoid-auto)
+project(my_tidy_plugin)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -20,38 +20,7 @@ separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 add_definitions(${LLVM_DEFINITIONS_LIST})
 
 # Add our include directory
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(eigen_tidy_plugin)
 
-# Create the plugin as a MODULE library
-add_library(clang-tidy-eigen MODULE
-    src/EigenModule.cpp
-    src/AvoidAutoForEigenCheck.cpp
-)
-
-# Link against required libraries
-target_link_libraries(clang-tidy-eigen
-    clangTidy
-    clangTidyUtils
-    clangAST
-    clangASTMatchers
-    clangBasic
-    clangFrontend
-    clangLex
-    clangTooling
-    clangSerialization
-    clangDriver
-    clangParse
-    clangSema
-    clangEdit
-    clangAnalysis
-    clangRewrite
-)
-
-# Ensure the plugin doesn't have a lib prefix and uses .so extension
-set_target_properties(clang-tidy-eigen PROPERTIES
-    PREFIX ""
-    SUFFIX ".so"
-)
-
-# Optional: Add example project
-add_subdirectory(example/mini)
+add_subdirectory(eigen_tidy_plugin)
+add_subdirectory(example)

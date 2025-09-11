@@ -1,103 +1,32 @@
-name: CI
+name: C++ CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        llvm-version: [17, 18]
-
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
-    - name: Install LLVM and Clang
+    - name: Install dependencies
       run: |
-        wget https://apt.llvm.org/llvm.sh
-        chmod +x llvm.sh
-        sudo ./llvm.sh ${{ matrix.llvm-version }}
-
-        # Install development packages
         sudo apt-get update
-        sudo apt-get install -y \
-          llvm-${{ matrix.llvm-version }}-dev \
-          clang-${{ matrix.llvm-version }} \
-          clang-tidy-${{ matrix.llvm-version }} \
-          libclang-${{ matrix.llvm-version }}-dev \
-          cmake \
-          build-essential
+        sudo apt-get install -y clang-tidy llvm-dev libclang-dev
 
-    - name: Set up environment
+    - name: Build
       run: |
-        echo "/usr/lib/llvm-${{ matrix.llvm-version }}/bin" >> $GITHUB_PATH
-        echo "LLVM_DIR=/usr/lib/llvm-${{ matrix.llvm-version }}/lib/cmake/llvm" >> $GITHUB_ENV
-        echo "Clang_DIR=/usr/lib/llvm-${{ matrix.llvm-version }}/lib/cmake/clang" >> $GITHUB_ENV
-
-    - name: Configure CMake
-      run: |
-        mkdir build
-        cd build
-        cmake .. \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DLLVM_DIR=$LLVM_DIR \
-          -DClang_DIR=$Clang_DIR \
-          -DCMAKE_CXX_COMPILER=clang++-${{ matrix.llvm-version }}
-
-    - name: Build plugin
-      run: |
-        cd build
-        make -j$(nproc)
-
-    - name: Verify plugin
-      run: |
-        ls -la build/
-        file build/clang-tidy-eigen.so
-
-        # Test that the plugin can be loaded and check works
-        echo "namespace Eigen { template<class T, int R, int C> class Matrix {}; }" > test.cpp
-        echo "void test() { using namespace Eigen; Matrix<double,-1,-1> m; auto x = m; }" >> test.cpp
-
-        if clang-tidy-${{ matrix.llvm-version }} \
-          --load ./build/clang-tidy-eigen.so \
-          --checks='-*,eigen-avoid-auto' \
-          test.cpp -- -std=c++17 2>&1 | grep -q "eigen-avoid-auto"; then
-          echo "✓ Plugin loads successfully and check works"
-        else
-          echo "✗ Plugin test failed"
-          exit 1
-        fi
-        rm test.cpp
+        chmod +x scripts/build.sh
+        ./scripts/build.sh
 
     - name: Run tests
       run: |
-        # Test the plugin with our test cases
-        echo "Running plugin tests..."
-        clang-tidy-${{ matrix.llvm-version }} \
-          --load ./build/clang-tidy-eigen.so \
-          --checks='-*,eigen-avoid-auto' \
-          test_cases.cpp \
-          -- -std=c++17 \
-          | tee test_output.log
-
-        # Verify we get expected warnings (at least 3)
-        warning_count=$(grep -c "eigen-avoid-auto" test_output.log || true)
-        echo "Found $warning_count warnings"
-
-        if [ "$warning_count" -ge 3 ]; then
-          echo "✓ Test passed: Found expected warnings"
-        else
-          echo "✗ Test failed: Expected at least 3 warnings, got $warning_count"
-          cat test_output.log
-          exit 1
-        fi
-
-    - name: Test example project
+        chmod +x scripts/run.sh
+        ./scripts/run.sh
       run: |
         cd example/mini
         echo "Testing example with mock Eigen..."
