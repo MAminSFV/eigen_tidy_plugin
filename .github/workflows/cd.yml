@@ -47,7 +47,7 @@ jobs:
         with:
           context: .
           file: ./tools/Dockerfile
-          target: builder
+          target: clang-base
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}:clang-${{ matrix.clang }}

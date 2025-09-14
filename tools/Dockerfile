@@ -1,28 +1,18 @@
 # ===============================
-# Stage 1: Build environment
-# Use official Ubuntu and install LLVM/Clang from apt.llvm.org
+# Stage 1: Clang/LLVM installation
 # ===============================
-FROM ubuntu:22.04 AS builder
+FROM ubuntu:22.04 AS clang-base
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG CLANG_VERSION=16
 
-# Base tools and dependencies
+# Base tools for installing LLVM/Clang
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       ca-certificates \
       curl \
       gnupg \
       lsb-release \
-      # build & packaging tools
-      cmake \
-      ninja-build \
-      dpkg-dev \
-      build-essential \
-      git \
-      # For testing
-      libeigen3-dev \
-      libgtest-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Add the official LLVM APT repository and install requested version
@@ -36,11 +26,42 @@ RUN echo "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_relea
         clang-tidy-${CLANG_VERSION} \
     && rm -rf /var/lib/apt/lists/*
 
-
 # Ensure clang and llvm tools are the right version
 RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${CLANG_VERSION} 100 && \
     update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${CLANG_VERSION} 100 && \
     update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-${CLANG_VERSION} 100
+
+
+# ===============================
+# Stage 2: Builder
+# ===============================
+FROM ubuntu:22.04 AS builder
+
+ARG CLANG_VERSION=16
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install build & packaging tools, test dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      cmake \
+      ninja-build \
+      dpkg-dev \
+      build-essential \
+      git \
+      libeigen3-dev \
+      libgtest-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Clang/LLVM installation from clang-base
+COPY --from=clang-base /usr/bin/clang* /usr/bin/
+COPY --from=clang-base /usr/bin/llvm-config /usr/bin/
+COPY --from=clang-base /usr/lib/llvm-${CLANG_VERSION} /usr/lib/llvm-${CLANG_VERSION}
+COPY --from=clang-base /usr/share/llvm-${CLANG_VERSION} /usr/share/llvm-${CLANG_VERSION}
+
+# Ensure unversioned symlinks exist in this stage
+RUN ln -sf /usr/bin/clang-${CLANG_VERSION} /usr/bin/clang && \
+    ln -sf /usr/bin/clang++-${CLANG_VERSION} /usr/bin/clang++ && \
+    ln -sf /usr/bin/llvm-config-${CLANG_VERSION} /usr/bin/llvm-config
 
 # Build setup
 WORKDIR /src
@@ -50,14 +71,15 @@ COPY . .
 RUN chmod +x tools/release.sh && \
     CC=clang CXX=clang++ tools/release.sh -t Release
 
+
 # ===============================
-# Stage 2: Runtime / Artifacts
+# Stage 3: Runtime / Artifacts
 # ===============================
-FROM debian:stable-slim
+FROM debian:stable-slim AS runtime
 
 WORKDIR /opt/eigen-tidy-plugin
 
-# Copy only the built .deb package(s)
+# Copy only the built .deb package(s) from builder stage
 COPY --from=builder /src/build/*.deb .
 
 # Default command shows artifacts
