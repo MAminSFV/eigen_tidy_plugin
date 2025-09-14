@@ -21,27 +21,10 @@ find_package(LLVM REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
-# Set up LLVM includes (will generally be /usr/lib/llvm-<ver>/include)
+# Set up LLVM includes
 include_directories(${LLVM_INCLUDE_DIRS})
 
-# Also query llvm-config for the canonical include dir and add it if it exists
-execute_process(COMMAND llvm-config --includedir
-                                OUTPUT_VARIABLE LLVM_INCLUDEDIR
-                                OUTPUT_STRIP_TRAILING_WHITESPACE
-                                ERROR_QUIET)
-if(LLVM_INCLUDEDIR AND EXISTS "${LLVM_INCLUDEDIR}")
-    include_directories("${LLVM_INCLUDEDIR}")
-endif()
-
-# As a final fallback, try /usr/lib/llvm-<major>/include
-string(REGEX MATCH "^[0-9]+" LLVM_VERSION_MAJOR "${LLVM_PACKAGE_VERSION}")
-set(LLVM_FALLBACK_INCLUDEDIR "/usr/lib/llvm-${LLVM_VERSION_MAJOR}/include")
-if(EXISTS "${LLVM_FALLBACK_INCLUDEDIR}")
-    include_directories("${LLVM_FALLBACK_INCLUDEDIR}")
-endif()
-
-separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
-add_definitions(${LLVM_DEFINITIONS_LIST})
+add_definitions(${LLVM_DEFINITIONS})
 
 # Create the plugin as a MODULE library
 add_library(eigen_tidy_plugin MODULE
@@ -49,13 +32,12 @@ add_library(eigen_tidy_plugin MODULE
     eigen_module.cpp
 )
 
-# Determine LLVM library directory from LLVM version
+# Determine LLVM library paths
 string(REGEX MATCH "^[0-9]+" LLVM_VERSION_MAJOR "${LLVM_PACKAGE_VERSION}")
 string(REGEX MATCH "^[0-9]+\\.[0-9]+" LLVM_VERSION_MAJOR_MINOR "${LLVM_PACKAGE_VERSION}")
 set(LLVM_LIB_DIR "/usr/lib/llvm-${LLVM_VERSION_MAJOR}/lib")
 
 # Link against required Clang and LLVM libraries
-# Note: Using full paths due to library naming inconsistencies
 target_link_libraries(eigen_tidy_plugin PRIVATE
     ${LLVM_LIB_DIR}/libclang-cpp.so.${LLVM_VERSION_MAJOR_MINOR}
     ${LLVM_LIB_DIR}/libclangAST.a
@@ -65,11 +47,6 @@ target_link_libraries(eigen_tidy_plugin PRIVATE
     ${LLVM_LIB_DIR}/libclangSema.a
     LLVMCore
     LLVMSupport
-)
-
-# Add Clang include paths to the target
-target_include_directories(eigen_tidy_plugin PRIVATE
-    ${LLVM_INCLUDE_DIRS}
 )
 
 # Ensure the plugin doesn't have a lib prefix and uses .so extension
@@ -92,25 +69,10 @@ install(FILES avoid_auto_check.hpp
 if(BUILD_TESTING)
     enable_testing()
 
-    # Include eigen as a dependency for test cases
-    find_package(Eigen3 REQUIRED)
-
     # Create a simple test that compiles the test cases
-    # Add a main function to make it executable
     add_executable(test_cases tests/test_cases.cpp)
-
-    target_link_libraries(test_cases PRIVATE
-        Eigen3::Eigen)
-
-    # Add a main function via compiler definition
     target_compile_definitions(test_cases PRIVATE -DTEST_MAIN)
-
-    # Add a test that just ensures the test cases compile and run
     add_test(NAME compile_test_cases COMMAND test_cases)
-
-    # TODO: Add integration tests that run clang-tidy with the plugin
-    # This would require a separate test script that invokes clang-tidy
-    # with the plugin on the test files
 endif()
 
 # CPack configuration for Debian packaging
