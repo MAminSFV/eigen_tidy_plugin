@@ -1,0 +1,22 @@
+{
+  "name": "Eigen Tidy Plugin Dev Container",
+  "build": {
+    "dockerfile": "../tools/Dockerfile",
+    "context": "..",
+    "target": "builder",
+    "args": {
+      "CLANG_VERSION": "18"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "llvm-vs-code-extensions.vscode-clangd"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}
