@@ -30,6 +30,7 @@ RUN echo "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_relea
         libclang-${CLANG_VERSION}-dev \
         clang-${CLANG_VERSION} \
         zlib1g-dev \
+        libzstd-dev \
         cmake \
         ninja-build \
         dpkg-dev \
