@@ -22,11 +22,6 @@ RUN echo "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_relea
     && apt-get install -y --no-install-recommends \
         llvm-${CLANG_VERSION} \
         llvm-${CLANG_VERSION}-dev \
-        libclang-cpp${CLANG_VERSION} \
-        libclang-cpp${CLANG_VERSION}-dev \
-        libclang-common-${CLANG_VERSION}-dev \
-        libclang-${CLANG_VERSION}-dev \
-        clang-${CLANG_VERSION} \
         clang-tidy-${CLANG_VERSION} \
         zlib1g-dev \
         cmake \
