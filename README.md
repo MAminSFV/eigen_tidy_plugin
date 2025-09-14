@@ -2,6 +2,17 @@
 
 A clang-tidy plugin for checking Eigen code.
 
+TODOs before making repo public
+- [ ] Add docker for dev and installation testing
+- [ ] Add dev container setup for development example usage
+- [ ] Re-write the workflows with the docker setup
+- [ ] Go through the CPack data
+- [ ] Go through tests and add more
+- [ ] Add for external review
+- [ ] Add a copilot instructions file
+- [ ] Clean up the readmes and make them informative and concise
+
+
 ## Overview
 
 This plugin provides a clang-tidy check `eigen-avoid-auto` to avoid using `auto` with Eigen types.
