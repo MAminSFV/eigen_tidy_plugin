@@ -9,10 +9,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Determine project version
       run: |
@@ -28,17 +38,21 @@ jobs:
         echo "Determined version: $VERSION"
       shell: bash
 
-    - name: Install dependencies
+    - name: Compute builder image reference
+      id: meta
+      shell: bash
       run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake build-essential dpkg-dev
-        sudo apt-get install -y llvm-dev libclang-dev clang-tidy
+        echo "builder_image=ghcr.io/${GITHUB_REPOSITORY,,}/builder:latest" >> "$GITHUB_OUTPUT"
 
-    - name: Run release build script
+    - name: Run release build script inside builder image
       env:
         PROJECT_VERSION: ${{ env.PROJECT_VERSION }}
       run: |
-        tools/release.sh --version "${PROJECT_VERSION}"
+        docker run --rm \
+          -e PROJECT_VERSION="$PROJECT_VERSION" \
+          -v "${{ github.workspace }}:/workspace" \
+          "${{ steps.meta.outputs.builder_image }}" \
+          bash -lc 'cd /workspace && chmod +x tools/release.sh && CC=clang CXX=clang++ tools/release.sh --version "$PROJECT_VERSION"'
 
     - name: Show build artifacts
       run: |

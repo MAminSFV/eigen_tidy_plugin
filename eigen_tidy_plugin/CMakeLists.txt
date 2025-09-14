@@ -2,15 +2,15 @@ cmake_minimum_required(VERSION 3.16)
 
 # Set project version from environment variable or use default
 if(DEFINED ENV{PROJECT_VERSION})
-  set(PROJECT_VERSION $ENV{PROJECT_VERSION})
-  # Extract numeric part for CMake VERSION (remove any suffix after -)
-  string(REGEX REPLACE "^([0-9]+\\.[0-9]+\\.[0-9]+).*" "\\1" CMAKE_VERSION "${PROJECT_VERSION}")
+    set(PROJECT_VERSION $ENV{PROJECT_VERSION})
 else()
-  set(PROJECT_VERSION 0.1.0) # default fallback version
-  set(CMAKE_VERSION 0.1.0)
+    set(PROJECT_VERSION 0.1.0) # default fallback version
 endif()
 
-project(eigen_tidy_plugin VERSION ${CMAKE_VERSION})
+# Extract numeric part for CMake project VERSION (remove any suffix after -)
+string(REGEX REPLACE "^([0-9]+\\.[0-9]+\\.[0-9]+).*" "\\1" PROJECT_SEMVER "${PROJECT_VERSION}")
+
+project(eigen_tidy_plugin VERSION ${PROJECT_SEMVER})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
