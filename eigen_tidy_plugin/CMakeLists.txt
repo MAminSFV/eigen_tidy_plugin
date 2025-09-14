@@ -49,6 +49,23 @@ add_library(eigen_tidy_plugin MODULE
     eigen_module.cpp
 )
 
+# Link against required Clang and LLVM libraries
+target_link_libraries(eigen_tidy_plugin PRIVATE
+    clang-cpp
+    ClangAST
+    ClangAnalysis
+    ClangBasic
+    ClangLex
+    ClangSema
+    LLVMCore
+    LLVMSupport
+)
+
+# Add Clang include paths to the target
+target_include_directories(eigen_tidy_plugin PRIVATE
+    ${LLVM_INCLUDE_DIRS}
+)
+
 # Ensure the plugin doesn't have a lib prefix and uses .so extension
 set_target_properties(eigen_tidy_plugin PROPERTIES
     PREFIX ""
