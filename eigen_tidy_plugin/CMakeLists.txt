@@ -18,18 +18,28 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Find required packages
 find_package(LLVM REQUIRED CONFIG)
 
-# Derive LLVM installation prefix from LLVM_DIR (…/lib/cmake/llvm)
-get_filename_component(LLVM_CMAKE_DIR "${LLVM_DIR}" DIRECTORY)
-get_filename_component(LLVM_PREFIX "${LLVM_CMAKE_DIR}" DIRECTORY)
-
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
-# Set up LLVM includes (clang headers are under the LLVM prefix)
+# Set up LLVM includes (will generally be /usr/lib/llvm-<ver>/include)
 include_directories(${LLVM_INCLUDE_DIRS})
 
-# Add clang/clang-tidy headers (under LLVM installation include) as fallback
-include_directories("${LLVM_PREFIX}/include")
+# Also query llvm-config for the canonical include dir and add it if it exists
+execute_process(COMMAND llvm-config --includedir
+                                OUTPUT_VARIABLE LLVM_INCLUDEDIR
+                                OUTPUT_STRIP_TRAILING_WHITESPACE
+                                ERROR_QUIET)
+if(LLVM_INCLUDEDIR AND EXISTS "${LLVM_INCLUDEDIR}")
+    include_directories("${LLVM_INCLUDEDIR}")
+endif()
+
+# As a final fallback, try /usr/lib/llvm-<major>/include
+string(REGEX MATCH "^[0-9]+" LLVM_VERSION_MAJOR "${LLVM_PACKAGE_VERSION}")
+set(LLVM_FALLBACK_INCLUDEDIR "/usr/lib/llvm-${LLVM_VERSION_MAJOR}/include")
+if(EXISTS "${LLVM_FALLBACK_INCLUDEDIR}")
+    include_directories("${LLVM_FALLBACK_INCLUDEDIR}")
+endif()
+
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 add_definitions(${LLVM_DEFINITIONS_LIST})
 
