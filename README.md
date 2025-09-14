@@ -1,4 +1,4 @@
-# My Tidy Plugin
+# Eigen Tidy Plugin
 
 A clang-tidy plugin for checking Eigen code.
 
@@ -23,12 +23,6 @@ sudo apt update
 sudo apt install -y cmake clang-tidy llvm-dev libclang-dev libeigen3-dev libgtest-dev
 ```
 
-#### Installing Dependencies on other systems:
-
-- **Fedora/RHEL**: `sudo dnf install cmake clang-devel llvm-devel eigen3-devel gtest-devel`
-- **Arch Linux**: `sudo pacman -S cmake clang llvm eigen gtest`
-- **macOS**: `brew install cmake llvm eigen googletest`
-
 ### Build Steps
 
 ```bash
@@ -47,20 +41,6 @@ clang-tidy --load ./build/eigen_tidy_plugin.so \
   tests/test_cases.cpp -- -std=c++17
 ```
 
-## CI
-
-This project uses GitHub Actions for CI. The configuration is in `.github/workflows/ci.yml`.
-
-```yaml
-Checks: 'eigen-avoid-auto'
-CheckOptions:
-  - key: eigen-avoid-auto.AllowInRangeFor
-    value: true
-  - key: eigen-avoid-auto.OnlyExpressions
-    value: false
-  - key: eigen-avoid-auto.BanDecltypeAuto
-    value: true
-```
 
 ## Examples
 
@@ -156,7 +136,3 @@ rm test.cpp
 ls -la build/eigen_tidy_plugin.so
 file build/eigen_tidy_plugin.so  # Should show it's a shared library
 ```
-
-## License
-
-MIT License - see LICENSE file for details.
