@@ -41,6 +41,7 @@ jobs:
           ghcr.io/${{ steps.meta.outputs.image_name }}:clang-${{ matrix.clang-version }} \
           bash -c "\
             set -euxo pipefail; \
+            git config --global --add safe.directory /workspace; \
             cd /workspace; \
           ./tools/build_and_test.sh \
           "
@@ -51,6 +52,7 @@ jobs:
           ghcr.io/${{ steps.meta.outputs.image_name }}:clang-${{ matrix.clang-version }} \
           bash -c "
             set -euxo pipefail
+            git config --global --add safe.directory /workspace
             cd /workspace/eigen_tidy_plugin
             echo 'Testing plugin with Clang ${{ matrix.clang-version }}...'
             clang-tidy-${{ matrix.clang-version }} \

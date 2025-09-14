@@ -57,6 +57,7 @@ jobs:
             apt-get install -y --no-install-recommends \
               cmake ninja-build dpkg-dev build-essential git \
               libeigen3-dev libgtest-dev && \
+            git config --global --add safe.directory /workspace && \
             cd /workspace && \
             ./tools/release.sh --version "$PROJECT_VERSION"
           '
