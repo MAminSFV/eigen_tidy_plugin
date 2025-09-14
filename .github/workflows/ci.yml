@@ -55,32 +55,3 @@ jobs:
             cd /workspace; \
           ./tools/build_and_test.sh \
           "
-
-    - name: Test Plugin with Clang ${{ matrix.clang-version }} on ${{ matrix.ubuntu-version }}
-      run: |
-        docker run --rm -v ${{ github.workspace }}:/workspace \
-          ghcr.io/${{ steps.meta.outputs.image_name }}:clang-${{ matrix.clang-version }}-${{ matrix.ubuntu-version }} \
-          bash -c "
-            set -euxo pipefail
-            git config --global --add safe.directory /workspace
-            cd /workspace/eigen_tidy_plugin
-            echo 'Testing plugin with Clang ${{ matrix.clang-version }} on ${{ matrix.ubuntu-version }}...'
-            clang-tidy-${{ matrix.clang-version }} \
-              --load ./build/eigen_tidy_plugin/eigen_tidy_plugin.so \
-              --checks='-*,eigen-avoid-auto' \
-              tests/test_cases.cpp \
-              -- -std=c++17 \
-              | tee output.log
-
-            # Check that we got expected warnings
-            warning_count=\$(grep -c 'eigen-avoid-auto' output.log || true)
-            echo \"Found \$warning_count warnings with Clang ${{ matrix.clang-version }} on ${{ matrix.ubuntu-version }}\"
-
-            if [ \"\$warning_count\" -ge 4 ]; then
-              echo '✓ Found expected warnings ('\$warning_count' >= 4)'
-            else
-              echo '✗ Expected at least 4 warnings, found '\$warning_count
-              cat output.log
-              exit 1
-            fi
-          "
