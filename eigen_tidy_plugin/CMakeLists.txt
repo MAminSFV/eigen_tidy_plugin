@@ -59,16 +59,45 @@ string(REGEX MATCH "^[0-9]+\\.[0-9]+" LLVM_VERSION_MAJOR_MINOR "${LLVM_PACKAGE_V
 set(LLVM_LIB_DIR "/usr/lib/llvm-${LLVM_VERSION_MAJOR}/lib")
 
 # Link against required Clang and LLVM libraries
-target_link_libraries(eigen_tidy_plugin PRIVATE
-    ${LLVM_LIB_DIR}/libclang-cpp.so.${LLVM_VERSION_MAJOR_MINOR}
-    ${LLVM_LIB_DIR}/libclangAST.a
-    ${LLVM_LIB_DIR}/libclangAnalysis.a
-    ${LLVM_LIB_DIR}/libclangBasic.a
-    ${LLVM_LIB_DIR}/libclangLex.a
-    ${LLVM_LIB_DIR}/libclangSema.a
-    LLVMCore
-    LLVMSupport
+# Try to find the clang-cpp library with different possible names
+find_library(CLANG_CPP_LIB
+    NAMES
+        clang-cpp
+        libclang-cpp.so.${LLVM_VERSION_MAJOR}
+        libclang-cpp.so
+        clang-cpp.${LLVM_VERSION_MAJOR}
+    PATHS
+        ${LLVM_LIB_DIR}
+        /usr/lib/x86_64-linux-gnu
+        /usr/lib
+    NO_DEFAULT_PATH
 )
+
+if(CLANG_CPP_LIB)
+    message(STATUS "Found clang-cpp library: ${CLANG_CPP_LIB}")
+    target_link_libraries(eigen_tidy_plugin PRIVATE
+        ${CLANG_CPP_LIB}
+        LLVMCore
+        LLVMSupport
+    )
+else()
+    message(STATUS "clang-cpp library not found, trying individual clang libraries")
+    # Fallback to individual static libraries
+    target_link_libraries(eigen_tidy_plugin PRIVATE
+        -lclangAST
+        -lclangBasic
+        -lclangFrontend
+        -lclangLex
+        -lclangSema
+        -lclangTooling
+        -lclangASTMatchers
+        LLVMCore
+        LLVMSupport
+    )
+endif()
+
+# Add library search paths
+target_link_directories(eigen_tidy_plugin PRIVATE ${LLVM_LIB_DIR})
 
 # Ensure the plugin doesn't have a lib prefix and uses .so extension
 set_target_properties(eigen_tidy_plugin PROPERTIES
