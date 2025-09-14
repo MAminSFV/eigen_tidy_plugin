@@ -61,7 +61,7 @@ WORKDIR /src
 COPY . .
 
 # Build using project release script (uses CMake, CPack, tests)
-RUN CC=clang CXX=clang++ tools/release.sh -t Release
+RUN tools/release.sh -t Release
 
 
 # ===============================
