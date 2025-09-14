@@ -78,7 +78,6 @@ if(CLANG_CPP_LIB)
     target_link_libraries(eigen_tidy_plugin PRIVATE
         ${CLANG_CPP_LIB}
         LLVMCore
-        LLVMSupport
     )
 else()
     message(STATUS "clang-cpp library not found, trying individual clang libraries")
@@ -92,7 +91,6 @@ else()
         -lclangTooling
         -lclangASTMatchers
         LLVMCore
-        LLVMSupport
     )
 endif()
 
