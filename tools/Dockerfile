@@ -24,6 +24,13 @@ RUN echo "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_relea
         llvm-${CLANG_VERSION}-dev \
         clang-${CLANG_VERSION} \
         clang-tidy-${CLANG_VERSION} \
+        cmake \
+        ninja-build \
+        dpkg-dev \
+        build-essential \
+        git \
+        libeigen3-dev \
+        libgtest-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Ensure clang and llvm tools are the right version
@@ -39,18 +46,6 @@ FROM ubuntu:22.04 AS builder
 
 ARG CLANG_VERSION=16
 ENV DEBIAN_FRONTEND=noninteractive
-
-# Install build & packaging tools, test dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      cmake \
-      ninja-build \
-      dpkg-dev \
-      build-essential \
-      git \
-      libeigen3-dev \
-      libgtest-dev \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy Clang/LLVM installation from clang-base
 COPY --from=clang-base /usr/bin/clang* /usr/bin/
@@ -68,8 +63,7 @@ WORKDIR /src
 COPY . .
 
 # Build using project release script (uses CMake, CPack, tests)
-RUN chmod +x tools/release.sh && \
-    CC=clang CXX=clang++ tools/release.sh -t Release
+RUN CC=clang CXX=clang++ tools/release.sh -t Release
 
 
 # ===============================
