@@ -10,21 +10,41 @@ This plugin provides a clang-tidy check `eigen-avoid-auto` to avoid using `auto`
 
 ### Prerequisites
 
-- CMake
-- LLVM/Clang
+- CMake (>= 3.16)
+- LLVM/Clang development packages
+- For testing:
+  - `libeigen3-dev` - Eigen3 development headers
+  - `libgtest-dev` - Google Test framework
+
+#### Installing Dependencies on Ubuntu/Debian:
+
+```bash
+sudo apt update
+sudo apt install -y cmake clang-tidy llvm-dev libclang-dev libeigen3-dev libgtest-dev
+```
+
+#### Installing Dependencies on other systems:
+
+- **Fedora/RHEL**: `sudo dnf install cmake clang-devel llvm-devel eigen3-devel gtest-devel`
+- **Arch Linux**: `sudo pacman -S cmake clang llvm eigen gtest`
+- **macOS**: `brew install cmake llvm eigen googletest`
 
 ### Build Steps
 
 ```bash
-./scripts/build.sh
+./scripts/build_and_test.sh
 ```
 
 ## Running
 
-To run the tests:
+The build script automatically runs the tests. To manually test the plugin:
 
 ```bash
-./scripts/run.sh
+# Test the plugin on the provided test cases
+cd eigen_tidy_plugin
+clang-tidy --load ./build/eigen_tidy_plugin.so \
+  --checks='-*,eigen-avoid-auto' \
+  tests/test_cases.cpp -- -std=c++17
 ```
 
 ## CI
@@ -78,21 +98,17 @@ https://libeigen.gitlab.io/eigen/docs-nightly/TopicPitfalls.html [eigen-avoid-au
      ~~~~ ^
 ```
 
-### Demo Project
-
-See the `example/mini/` directory for a complete sample project demonstrating the check.
-
 ## Testing
 
 The plugin can be tested using the provided test files:
 
 ```bash
 # Test with the basic test cases
+cd eigen_tidy_plugin
 clang-tidy --load ./build/eigen_tidy_plugin.so --checks='-*,eigen-avoid-auto' \
-    test_cases.cpp -- -std=c++17
+    tests/test_cases.cpp -- -std=c++17
 
-# Test with the example project (using mock Eigen)
-cd example/mini
+# Create a simple test file to verify the plugin works
 clang-tidy --load ../../build/eigen_tidy_plugin.so --checks='-*,eigen-avoid-auto' \
     main.cpp -- -std=c++17 -DMOCK_EIGEN
 
@@ -100,8 +116,8 @@ clang-tidy --load ../../build/eigen_tidy_plugin.so --checks='-*,eigen-avoid-auto
 clang-tidy --load ../../build/eigen_tidy_plugin.so --checks='-*,eigen-avoid-auto' \
     main.cpp -- -std=c++17 -I/usr/include/eigen3
 
-# Run the automated test script
-./tests/run.sh
+# The build_and_test.sh script runs all automated tests
+./scripts/build_and_test.sh
 ```
 
 ## Troubleshooting
