@@ -46,22 +46,19 @@ RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${CLANG_VE
 WORKDIR /src
 COPY . .
 
-# Configure & build project with CMake + Clang
-RUN cmake -B build -S . -DCMAKE_BUILD_TYPE=Release \
-    -G Ninja \
-    -DCMAKE_C_COMPILER=clang \
-    -DCMAKE_CXX_COMPILER=clang++
-RUN cmake --build build --target package
+# Build using project release script (uses CMake, CPack, tests)
+RUN chmod +x tools/release.sh && \
+    CC=clang CXX=clang++ tools/release.sh -t Release
 
 # ===============================
 # Stage 2: Runtime / Artifacts
 # ===============================
 FROM debian:stable-slim
 
-WORKDIR /opt/mypackage
+WORKDIR /opt/eigen-tidy-plugin
 
 # Copy only the built .deb package(s)
 COPY --from=builder /src/build/*.deb .
 
 # Default command shows artifacts
-CMD ["ls", "-lh", "/opt/mypackage"]
+CMD ["ls", "-lh", "/opt/eigen-tidy-plugin"]
