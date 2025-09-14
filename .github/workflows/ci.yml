@@ -20,29 +20,16 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v4
 
-    - name: Build Docker image with Clang ${{ matrix.clang-version }}
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: ./tools/Dockerfile
-        target: builder
-        load: true
-        tags: eigen-tidy-plugin:clang-${{ matrix.clang-version }}
-        build-args: |
-          CLANG_VERSION=${{ matrix.clang-version }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-
     - name: Build and Test with Clang ${{ matrix.clang-version }}
       run: |
         docker run --rm -v ${{ github.workspace }}:/workspace \
-          eigen-tidy-plugin:clang-${{ matrix.clang-version }} \
+          my-tidy-plugin:clang-${{ matrix.clang-version }} \
           bash -c "cd /workspace && ./tools/build_and_test.sh"
 
     - name: Test Plugin with Clang ${{ matrix.clang-version }}
       run: |
         docker run --rm -v ${{ github.workspace }}:/workspace \
-          eigen-tidy-plugin:clang-${{ matrix.clang-version }} \
+          my-tidy-plugin:clang-${{ matrix.clang-version }} \
           bash -c "
             cd /workspace/eigen_tidy_plugin
             echo 'Testing plugin with Clang ${{ matrix.clang-version }}...'

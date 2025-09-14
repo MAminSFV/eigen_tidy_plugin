@@ -1,5 +1,5 @@
 # ===============================
-# Stage 1: Clang/LLVM installation
+# Stage 1: Clang/LLVM Base image
 # ===============================
 FROM ubuntu:22.04 AS clang-base
 
