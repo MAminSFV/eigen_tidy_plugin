@@ -42,21 +42,18 @@ RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${CLANG_VE
 # ===============================
 # Stage 2: Builder
 # ===============================
-FROM ubuntu:22.04 AS builder
+FROM clang-base AS builder
 
 ARG CLANG_VERSION=16
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Copy Clang/LLVM installation from clang-base
-COPY --from=clang-base /usr/bin/clang* /usr/bin/
-COPY --from=clang-base /usr/bin/llvm-config /usr/bin/
-COPY --from=clang-base /usr/lib/llvm-${CLANG_VERSION} /usr/lib/llvm-${CLANG_VERSION}
-COPY --from=clang-base /usr/share/llvm-${CLANG_VERSION} /usr/share/llvm-${CLANG_VERSION}
+## Using clang-base directly provides clang/llvm, cmake, ninja, and build deps
 
 # Ensure unversioned symlinks exist in this stage
 RUN ln -sf /usr/bin/clang-${CLANG_VERSION} /usr/bin/clang && \
     ln -sf /usr/bin/clang++-${CLANG_VERSION} /usr/bin/clang++ && \
-    ln -sf /usr/bin/llvm-config-${CLANG_VERSION} /usr/bin/llvm-config
+    ln -sf /usr/bin/llvm-config-${CLANG_VERSION} /usr/bin/llvm-config && \
+    ln -sf /usr/bin/clang-tidy-${CLANG_VERSION} /usr/bin/clang-tidy
 
 # Build setup
 WORKDIR /src
