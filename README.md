@@ -37,7 +37,7 @@ sudo apt install -y cmake clang-tidy llvm-dev libclang-dev libeigen3-dev libgtes
 ### Build Steps
 
 ```bash
-./scripts/build_and_test.sh
+./tools/build_and_test.sh
 ```
 
 ## Running
@@ -108,7 +108,7 @@ clang-tidy --load ../../build/eigen_tidy_plugin.so --checks='-*,eigen-avoid-auto
     main.cpp -- -std=c++17 -I/usr/include/eigen3
 
 # The build_and_test.sh script runs all automated tests
-./scripts/build_and_test.sh
+./tools/build_and_test.sh
 ```
 
 ## Troubleshooting
