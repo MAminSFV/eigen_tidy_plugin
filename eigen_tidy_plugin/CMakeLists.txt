@@ -39,29 +39,6 @@ add_library(eigen_tidy_plugin MODULE
     eigen_module.cpp
 )
 
-# Link against the monolithic clang-cpp shared library provided by distro packages
-find_library(CLANG_CPP_LIB NAMES clang-cpp "clang-cpp-${LLVM_VERSION_MAJOR}")
-if(NOT CLANG_CPP_LIB)
-    # Fallback to LLVM lib dir if not found in default path
-    find_library(CLANG_CPP_LIB NAMES clang-cpp "clang-cpp-${LLVM_VERSION_MAJOR}" PATHS "${LLVM_PREFIX}/lib" NO_DEFAULT_PATH)
-endif()
-
-if(NOT CLANG_CPP_LIB)
-    # Final attempt: look under versioned llvm lib directories
-    file(GLOB _clang_cpp_candidates
-        "/usr/lib/llvm-*/lib/libclang-cpp*.so"
-        "/usr/local/llvm-*/lib/libclang-cpp*.so"
-    )
-    list(LENGTH _clang_cpp_candidates _n)
-    if(_n GREATER 0)
-        list(GET _clang_cpp_candidates 0 CLANG_CPP_LIB)
-    else()
-        message(FATAL_ERROR "Could not find clang-cpp library. Ensure libclang-cpp is installed.")
-    endif()
-endif()
-
-target_link_libraries(eigen_tidy_plugin PRIVATE ${CLANG_CPP_LIB})
-
 # Ensure the plugin doesn't have a lib prefix and uses .so extension
 set_target_properties(eigen_tidy_plugin PROPERTIES
     PREFIX ""
