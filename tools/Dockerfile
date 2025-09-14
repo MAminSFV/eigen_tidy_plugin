@@ -1,27 +1,39 @@
 # ===============================
 # Stage 1: Build environment
+# Use official Ubuntu and install LLVM/Clang from apt.llvm.org
 # ===============================
+FROM ubuntu:22.04 AS builder
+
+ARG DEBIAN_FRONTEND=noninteractive
 ARG CLANG_VERSION=16
-FROM clang:${CLANG_VERSION} AS builder
 
-# Set the same ARG inside this stage
-ARG CLANG_VERSION
-
-# Install essential build and packaging tools + matching LLVM
+# Base tools and dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    cmake \
-    ninja-build \
-    dpkg-dev \
-    build-essential \
-    git \
-    # LLVM core + dev headers + clang-tidy
-    llvm-${CLANG_VERSION} \
-    llvm-${CLANG_VERSION}-dev \
-    clang-tidy-${CLANG_VERSION} \
-    # For testing
-    libeigen3-dev \
-    libgtest-dev \
+      ca-certificates \
+      curl \
+      gnupg \
+      lsb-release \
+      # build & packaging tools
+      cmake \
+      ninja-build \
+      dpkg-dev \
+      build-essential \
+      git \
+      # For testing
+      libeigen3-dev \
+      libgtest-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add the official LLVM APT repository and install requested version
+RUN echo "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-${CLANG_VERSION} main" | tee /etc/apt/sources.list.d/llvm.list \
+    && curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        llvm-${CLANG_VERSION} \
+        llvm-${CLANG_VERSION}-dev \
+        clang-${CLANG_VERSION} \
+        clang-tidy-${CLANG_VERSION} \
     && rm -rf /var/lib/apt/lists/*
 
 
