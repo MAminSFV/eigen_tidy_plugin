@@ -12,50 +12,56 @@ jobs:
 
     strategy:
       matrix:
-        llvm-version: [15, 16, 17, 18]
+        clang-version: [15, 16, 17, 18]
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install LLVM ${{ matrix.llvm-version }}
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
+
+    - name: Build Docker image with Clang ${{ matrix.clang-version }}
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./tools/Dockerfile
+        target: builder
+        load: true
+        tags: eigen-tidy-plugin:clang-${{ matrix.clang-version }}
+        build-args: |
+          CLANG_VERSION=${{ matrix.clang-version }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build and Test with Clang ${{ matrix.clang-version }}
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          llvm-${{ matrix.llvm-version }}-dev \
-          clang-${{ matrix.llvm-version }} \
-          clang-tidy-${{ matrix.llvm-version }} \
-          libclang-${{ matrix.llvm-version }}-dev \
-          libeigen3-dev \
-          libgtest-dev \
-          cmake \
-          build-essential
+        docker run --rm -v ${{ github.workspace }}:/workspace \
+          eigen-tidy-plugin:clang-${{ matrix.clang-version }} \
+          bash -c "cd /workspace && ./tools/build_and_test.sh"
 
-    - name: Build and Test with LLVM ${{ matrix.llvm-version }}
+    - name: Test Plugin with Clang ${{ matrix.clang-version }}
       run: |
-        export PATH="/usr/lib/llvm-${{ matrix.llvm-version }}/bin:$PATH"
-        export LLVM_DIR=/usr/lib/llvm-${{ matrix.llvm-version }}/lib/cmake/llvm
-        export Clang_DIR=/usr/lib/llvm-${{ matrix.llvm-version }}/lib/cmake/clang
-        ./tools/build_and_test.sh
+        docker run --rm -v ${{ github.workspace }}:/workspace \
+          eigen-tidy-plugin:clang-${{ matrix.clang-version }} \
+          bash -c "
+            cd /workspace/eigen_tidy_plugin
+            echo 'Testing plugin with Clang ${{ matrix.clang-version }}...'
+            clang-tidy \
+              --load ./build/eigen_tidy_plugin.so \
+              --checks='-*,eigen-avoid-auto' \
+              tests/test_cases.cpp \
+              -- -std=c++17 \
+              | tee output.log
 
-    - name: Test Plugin with LLVM ${{ matrix.llvm-version }}
-      run: |
-        cd eigen_tidy_plugin
-        echo "Testing plugin with LLVM ${{ matrix.llvm-version }}..."
-        clang-tidy-${{ matrix.llvm-version }} \
-          --load ./build/eigen_tidy_plugin.so \
-          --checks='-*,eigen-avoid-auto' \
-          tests/test_cases.cpp \
-          -- -std=c++17 \
-          | tee output.log
+            # Check that we got expected warnings
+            warning_count=\$(grep -c 'eigen-avoid-auto' output.log || true)
+            echo \"Found \$warning_count warnings with Clang ${{ matrix.clang-version }}\"
 
-        # Check that we got expected warnings
-        warning_count=$(grep -c "eigen-avoid-auto" output.log || true)
-        echo "Found $warning_count warnings with LLVM ${{ matrix.llvm-version }}"
-
-        if [ "$warning_count" -ge 4 ]; then
-          echo "✓ Found expected warnings ($warning_count >= 4)"
-        else
-          echo "✗ Expected at least 4 warnings, found $warning_count"
-          cat output.log
-          exit 1
-        fi
+            if [ \"\$warning_count\" -ge 4 ]; then
+              echo '✓ Found expected warnings ('\$warning_count' >= 4)'
+            else
+              echo '✗ Expected at least 4 warnings, found '\$warning_count
+              cat output.log
+              exit 1
+            fi
+          "

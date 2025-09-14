@@ -3,9 +3,9 @@
 A clang-tidy plugin for checking Eigen code.
 
 TODOs before making repo public
-- [ ] Add docker for dev and installation testing
-- [ ] Add dev container setup for development example usage
-- [ ] Re-write the workflows with the docker setup (add cd?)
+- [x] Add docker for dev and installation testing
+- [x] Add dev container setup for development example usage
+- [x] Re-write the workflows with the docker setup (add cd?)
 - [ ] Go through the CPack data
 - [ ] Go through tests and add more
 - [ ] Add for external review
@@ -36,8 +36,16 @@ sudo apt install -y cmake clang-tidy llvm-dev libclang-dev libeigen3-dev libgtes
 
 ### Build Steps
 
+#### Native Build
 ```bash
 ./tools/build_and_test.sh
+```
+
+#### Docker Build (for consistent environments)
+```bash
+# Build the container and run tests
+docker build -f tools/Dockerfile --target builder -t eigen-plugin .
+docker run --rm -v $(pwd):/workspace -w /workspace eigen-plugin ./tools/build_and_test.sh
 ```
 
 ## Running
