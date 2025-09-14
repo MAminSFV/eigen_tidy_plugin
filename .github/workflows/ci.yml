@@ -7,58 +7,12 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          cmake \
-          clang-tidy \
-          llvm-dev \
-          libclang-dev \
-          libeigen3-dev \
-          libgtest-dev \
-          build-essential
-
-    - name: Build and Test
-      run: |
-        chmod +x scripts/build_and_test.sh
-        ./scripts/build_and_test.sh
-
-    - name: Test Plugin Functionality
-      run: |
-        cd eigen_tidy_plugin
-        echo "Testing plugin with test cases..."
-        clang-tidy \
-          --load ./build/eigen_tidy_plugin.so \
-          --checks='-*,eigen-avoid-auto' \
-          tests/test_cases.cpp \
-          -- -std=c++17 \
-          | tee output.log
-
-        # Check that we got expected warnings
-        warning_count=$(grep -c "eigen-avoid-auto" output.log || true)
-        echo "Found $warning_count warnings in test cases"
-
-        if [ "$warning_count" -ge 4 ]; then
-          echo "✓ Found expected warnings ($warning_count >= 4)"
-        else
-          echo "✗ Expected at least 4 warnings, found $warning_count"
-          cat output.log
-          exit 1
-        fi
-
-  test-with-different-llvm:
+  test-with-llvm-matrix:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        llvm-version: [17, 18]
+        llvm-version: [15, 16, 17, 18]
 
     steps:
     - uses: actions/checkout@v4
