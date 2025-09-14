@@ -17,6 +17,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find required packages
 find_package(LLVM REQUIRED CONFIG)
+find_package(Clang REQUIRED CONFIG)
 
 # Derive LLVM installation prefix from LLVM_DIR (…/lib/cmake/llvm)
 get_filename_component(LLVM_CMAKE_DIR "${LLVM_DIR}" DIRECTORY)
@@ -27,8 +28,9 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
 # Set up LLVM and Clang includes
 include_directories(${LLVM_INCLUDE_DIRS})
+include_directories(${Clang_INCLUDE_DIRS})
 
-# Add clang/clang-tidy headers (under LLVM installation include)
+# Add clang/clang-tidy headers (under LLVM installation include) as fallback
 include_directories("${LLVM_PREFIX}/include")
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 add_definitions(${LLVM_DEFINITIONS_LIST})
