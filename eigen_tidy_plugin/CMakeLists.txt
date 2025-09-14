@@ -49,14 +49,20 @@ add_library(eigen_tidy_plugin MODULE
     eigen_module.cpp
 )
 
+# Determine LLVM library directory from LLVM version
+string(REGEX MATCH "^[0-9]+" LLVM_VERSION_MAJOR "${LLVM_PACKAGE_VERSION}")
+string(REGEX MATCH "^[0-9]+\\.[0-9]+" LLVM_VERSION_MAJOR_MINOR "${LLVM_PACKAGE_VERSION}")
+set(LLVM_LIB_DIR "/usr/lib/llvm-${LLVM_VERSION_MAJOR}/lib")
+
 # Link against required Clang and LLVM libraries
+# Note: Using full paths due to library naming inconsistencies
 target_link_libraries(eigen_tidy_plugin PRIVATE
-    clang-cpp
-    ClangAST
-    ClangAnalysis
-    ClangBasic
-    ClangLex
-    ClangSema
+    ${LLVM_LIB_DIR}/libclang-cpp.so.${LLVM_VERSION_MAJOR_MINOR}
+    ${LLVM_LIB_DIR}/libclangAST.a
+    ${LLVM_LIB_DIR}/libclangAnalysis.a
+    ${LLVM_LIB_DIR}/libclangBasic.a
+    ${LLVM_LIB_DIR}/libclangLex.a
+    ${LLVM_LIB_DIR}/libclangSema.a
     LLVMCore
     LLVMSupport
 )
