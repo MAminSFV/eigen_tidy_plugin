@@ -9,6 +9,9 @@ on:
 jobs:
   test-with-llvm-matrix:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     env:
       IMAGE_LOCAL_NAME: eigen-tidy-plugin
 
@@ -19,27 +22,38 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Compute image name (lowercase)
+      id: meta
+      shell: bash
+      run: |
+        echo "image_name=${GITHUB_REPOSITORY,,}/clang-base" >> "$GITHUB_OUTPUT"
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Build and Test with Clang ${{ matrix.clang-version }}
       run: |
         docker run --rm -v ${{ github.workspace }}:/workspace \
-          ghcr.io/llvm/llvm:clang-${{ matrix.clang-version }} \
+          ghcr.io/${{ steps.meta.outputs.image_name }}:clang-${{ matrix.clang-version }} \
           bash -c "\
             set -euxo pipefail; \
-            apt-get update; \
-            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-              cmake ninja-build build-essential git libeigen3-dev libgtest-dev; \
             cd /workspace; \
-            ./tools/build_and_test.sh \
+          ./tools/build_and_test.sh \
           "
 
     - name: Test Plugin with Clang ${{ matrix.clang-version }}
       run: |
         docker run --rm -v ${{ github.workspace }}:/workspace \
-          ghcr.io/llvm/llvm:clang-${{ matrix.clang-version }} \
+          ghcr.io/${{ steps.meta.outputs.image_name }}:clang-${{ matrix.clang-version }} \
           bash -c "
+            set -euxo pipefail
             cd /workspace/eigen_tidy_plugin
             echo 'Testing plugin with Clang ${{ matrix.clang-version }}...'
-            clang-tidy \
+            clang-tidy-${{ matrix.clang-version }} \
               --load ./build/eigen_tidy_plugin.so \
               --checks='-*,eigen-avoid-auto' \
               tests/test_cases.cpp \
