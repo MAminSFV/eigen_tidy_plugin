@@ -25,8 +25,8 @@ RUN echo "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_relea
         libclang-cpp${CLANG_VERSION} \
         libclang-cpp${CLANG_VERSION}-dev \
         libclang-common-${CLANG_VERSION}-dev \
+        libclang-${CLANG_VERSION}-dev \
         clang-${CLANG_VERSION} \
-        clang-${CLANG_VERSION}-dev \
         clang-tidy-${CLANG_VERSION} \
         zlib1g-dev \
         cmake \
