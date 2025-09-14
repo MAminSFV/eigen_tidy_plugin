@@ -5,7 +5,7 @@ A clang-tidy plugin for checking Eigen code.
 TODOs before making repo public
 - [ ] Add docker for dev and installation testing
 - [ ] Add dev container setup for development example usage
-- [ ] Re-write the workflows with the docker setup
+- [ ] Re-write the workflows with the docker setup (add cd?)
 - [ ] Go through the CPack data
 - [ ] Go through tests and add more
 - [ ] Add for external review
