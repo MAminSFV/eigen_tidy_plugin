@@ -1,7 +1,7 @@
 # ===============================
 # Stage 1: Clang/LLVM Base image
 # ===============================
-FROM ubuntu:22.04 AS clang-base
+FROM ubuntu:24.04 AS clang-base
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG CLANG_VERSION=16
