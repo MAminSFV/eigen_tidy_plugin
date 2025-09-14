@@ -1,0 +1,66 @@
+name: Build & Publish Debian Package
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Determine project version
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          # Extract version from tag (remove 'v' prefix if present)
+          VERSION=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION#v}
+        else
+          # Use commit hash for branch builds
+          VERSION="0.1.0-${GITHUB_SHA::8}"
+        fi
+        echo "PROJECT_VERSION=$VERSION" >> $GITHUB_ENV
+        echo "Determined version: $VERSION"
+      shell: bash
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential dpkg-dev
+        sudo apt-get install -y llvm-dev libclang-dev clang-tidy
+
+    - name: Run release build script
+      env:
+        PROJECT_VERSION: ${{ env.PROJECT_VERSION }}
+      run: |
+        chmod +x scripts/release.sh
+        scripts/release.sh --version "${PROJECT_VERSION}"
+
+    - name: Show build artifacts
+      run: |
+        echo "Generated files:"
+        find eigen_tidy_plugin/build -name "*.deb" -ls
+        find repo -type f -ls
+
+    - name: Publish to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: repo
+
+    - name: Upload .deb as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: debian-package-${{ github.sha }}
+        path: eigen_tidy_plugin/build/*.deb
+
+    - name: Upload repository as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: apt-repository-${{ github.sha }}
+        path: repo/

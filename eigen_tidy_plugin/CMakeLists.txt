@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 3.16)
-project(eigen_tidy_plugin)
+
+# Set project version from environment variable or use default
+if(DEFINED ENV{PROJECT_VERSION})
+  set(PROJECT_VERSION $ENV{PROJECT_VERSION})
+  # Extract numeric part for CMake VERSION (remove any suffix after -)
+  string(REGEX REPLACE "^([0-9]+\\.[0-9]+\\.[0-9]+).*" "\\1" CMAKE_VERSION "${PROJECT_VERSION}")
+else()
+  set(PROJECT_VERSION 0.1.0) # default fallback version
+  set(CMAKE_VERSION 0.1.0)
+endif()
+
+project(eigen_tidy_plugin VERSION ${CMAKE_VERSION})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -51,6 +62,17 @@ set_target_properties(eigen_tidy_plugin PROPERTIES
     SUFFIX ".so"
 )
 
+# Install rules for packaging
+install(TARGETS eigen_tidy_plugin
+    LIBRARY DESTINATION lib/clang-tidy-plugins
+    RUNTIME DESTINATION lib/clang-tidy-plugins
+)
+
+# Install header files
+install(FILES avoid_auto_check.hpp
+    DESTINATION include/eigen-tidy-plugin
+)
+
 if(BUILD_TESTING)
     enable_testing()
 
@@ -74,3 +96,16 @@ if(BUILD_TESTING)
     # This would require a separate test script that invokes clang-tidy
     # with the plugin on the test files
 endif()
+
+# CPack configuration for Debian packaging
+set(CPACK_GENERATOR "DEB")
+set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "MAminSFV <mamin@example.com>")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Eigen Tidy Plugin - A clang-tidy plugin for Eigen-specific checks")
+set(CPACK_PACKAGE_CONTACT "mamin@example.com")
+set(CPACK_DEBIAN_PACKAGE_SECTION "devel")
+set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+set(CPACK_PACKAGE_DESCRIPTION "A clang-tidy plugin that provides Eigen-specific linting checks, including avoiding auto declarations in Eigen expressions.")
+
+include(CPack)
