@@ -19,7 +19,17 @@ jobs:
 
     strategy:
       matrix:
-        clang: [15, 16, 17, 18]
+        include:
+          - clang: 15
+            ubuntu: jammy
+          - clang: 16
+            ubuntu: jammy
+          - clang: 17
+            ubuntu: noble
+          - clang: 18
+            ubuntu: noble
+          - clang: 19
+            ubuntu: noble
       fail-fast: false
 
     steps:
@@ -50,7 +60,8 @@ jobs:
           target: clang-base
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}:clang-${{ matrix.clang }}
-            ${{ matrix.clang == 18 && format('{0}/{1}:latest', env.REGISTRY, steps.meta.outputs.image_name) || '' }}
+            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}:clang-${{ matrix.clang }}-${{ matrix.ubuntu }}
+            ${{ matrix.clang == 18 && matrix.ubuntu == 'noble' && format('{0}/{1}:latest', env.REGISTRY, steps.meta.outputs.image_name) || '' }}
           build-args: |
             CLANG_VERSION=${{ matrix.clang }}
+            UBUNTU_VERSION=${{ matrix.ubuntu }}

@@ -1,10 +1,11 @@
 # ===============================
 # Stage 1: Clang/LLVM Base image
 # ===============================
-FROM ubuntu:24.04 AS clang-base
+ARG UBUNTU_VERSION=noble
+FROM ubuntu:${UBUNTU_VERSION} AS clang-base
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG CLANG_VERSION=16
+ARG CLANG_VERSION=18
 
 # Base tools for installing LLVM/Clang
 RUN apt-get update && \
@@ -23,6 +24,11 @@ RUN echo "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_relea
         llvm-${CLANG_VERSION} \
         llvm-${CLANG_VERSION}-dev \
         clang-tidy-${CLANG_VERSION} \
+        libclang-cpp${CLANG_VERSION} \
+        libclang-cpp${CLANG_VERSION}-dev \
+        libclang-common-${CLANG_VERSION}-dev \
+        libclang-${CLANG_VERSION}-dev \
+        clang-${CLANG_VERSION} \
         zlib1g-dev \
         cmake \
         ninja-build \
@@ -44,7 +50,7 @@ RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${CLANG_VE
 # ===============================
 FROM clang-base AS builder
 
-ARG CLANG_VERSION=16
+ARG CLANG_VERSION=18
 ENV DEBIAN_FRONTEND=noninteractive
 
 ## Using clang-base directly provides clang/llvm, cmake, ninja, and build deps

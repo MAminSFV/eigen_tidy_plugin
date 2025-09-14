@@ -17,7 +17,17 @@ jobs:
 
     strategy:
       matrix:
-        clang-version: [15, 16, 17, 18]
+        include:
+          - clang-version: 15
+            ubuntu-version: jammy
+          - clang-version: 16
+            ubuntu-version: jammy
+          - clang-version: 17
+            ubuntu-version: noble
+          - clang-version: 18
+            ubuntu-version: noble
+          - clang-version: 19
+            ubuntu-version: noble
 
     steps:
     - uses: actions/checkout@v4
@@ -35,10 +45,10 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build and Test with Clang ${{ matrix.clang-version }}
+    - name: Build and Test with Clang ${{ matrix.clang-version }} on ${{ matrix.ubuntu-version }}
       run: |
         docker run --rm -v ${{ github.workspace }}:/workspace \
-          ghcr.io/${{ steps.meta.outputs.image_name }}:clang-${{ matrix.clang-version }} \
+          ghcr.io/${{ steps.meta.outputs.image_name }}:clang-${{ matrix.clang-version }}-${{ matrix.ubuntu-version }} \
           bash -c "\
             set -euxo pipefail; \
             git config --global --add safe.directory /workspace; \
@@ -46,15 +56,15 @@ jobs:
           ./tools/build_and_test.sh \
           "
 
-    - name: Test Plugin with Clang ${{ matrix.clang-version }}
+    - name: Test Plugin with Clang ${{ matrix.clang-version }} on ${{ matrix.ubuntu-version }}
       run: |
         docker run --rm -v ${{ github.workspace }}:/workspace \
-          ghcr.io/${{ steps.meta.outputs.image_name }}:clang-${{ matrix.clang-version }} \
+          ghcr.io/${{ steps.meta.outputs.image_name }}:clang-${{ matrix.clang-version }}-${{ matrix.ubuntu-version }} \
           bash -c "
             set -euxo pipefail
             git config --global --add safe.directory /workspace
             cd /workspace/eigen_tidy_plugin
-            echo 'Testing plugin with Clang ${{ matrix.clang-version }}...'
+            echo 'Testing plugin with Clang ${{ matrix.clang-version }} on ${{ matrix.ubuntu-version }}...'
             clang-tidy-${{ matrix.clang-version }} \
               --load ./build/eigen_tidy_plugin.so \
               --checks='-*,eigen-avoid-auto' \
@@ -64,7 +74,7 @@ jobs:
 
             # Check that we got expected warnings
             warning_count=\$(grep -c 'eigen-avoid-auto' output.log || true)
-            echo \"Found \$warning_count warnings with Clang ${{ matrix.clang-version }}\"
+            echo \"Found \$warning_count warnings with Clang ${{ matrix.clang-version }} on ${{ matrix.ubuntu-version }}\"
 
             if [ \"\$warning_count\" -ge 4 ]; then
               echo '✓ Found expected warnings ('\$warning_count' >= 4)'
