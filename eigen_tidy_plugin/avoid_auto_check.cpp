@@ -3,9 +3,17 @@
 #include "clang/AST/TypeLoc.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Lex/Lexer.h"
+#include "llvm/Config/llvm-config.h"
 
 #include "avoid_auto_check.hpp"
 
+// Compatibility helper for LLVM versions
+// LLVM 15 and earlier use startswith, LLVM 16+ use starts_with
+#if LLVM_VERSION_MAJOR >= 16
+#define LLVM_STARTS_WITH(str, prefix) (str).starts_with(prefix)
+#else
+#define LLVM_STARTS_WITH(str, prefix) (str).startswith(prefix)
+#endif
 
 using namespace clang::ast_matchers;
 
@@ -264,8 +272,8 @@ bool AvoidAutoCheck::isEigenPlainObject(const Type *Ty) const {
   // Also check for common Eigen concrete types by name
   StringRef ClassName = RD->getName();
   if (isInEigenNamespace(RD)) {
-    if (ClassName.starts_with("Matrix") || ClassName.starts_with("Array") ||
-        ClassName.starts_with("Vector") || ClassName == "Quaternion" ||
+    if (LLVM_STARTS_WITH(ClassName, "Matrix") || LLVM_STARTS_WITH(ClassName, "Array") ||
+        LLVM_STARTS_WITH(ClassName, "Vector") || ClassName == "Quaternion" ||
         ClassName == "AngleAxis" || ClassName == "Transform") {
       return true;
     }
