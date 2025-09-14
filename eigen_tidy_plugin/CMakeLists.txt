@@ -17,17 +17,19 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find required packages
 find_package(LLVM REQUIRED CONFIG)
-find_package(Clang REQUIRED CONFIG)
+
+# Derive LLVM installation prefix from LLVM_DIR (…/lib/cmake/llvm)
+get_filename_component(LLVM_CMAKE_DIR "${LLVM_DIR}" DIRECTORY)
+get_filename_component(LLVM_PREFIX "${LLVM_CMAKE_DIR}" DIRECTORY)
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
 # Set up LLVM and Clang includes
 include_directories(${LLVM_INCLUDE_DIRS})
-include_directories(${CLANG_INCLUDE_DIRS})
 
-# Add clang-tidy specific headers (usually in LLVM installation)
-include_directories("${LLVM_INSTALL_PREFIX}/include")
+# Add clang/clang-tidy headers (under LLVM installation include)
+include_directories("${LLVM_PREFIX}/include")
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 add_definitions(${LLVM_DEFINITIONS_LIST})
 
@@ -37,24 +39,18 @@ add_library(eigen_tidy_plugin MODULE
     eigen_module.cpp
 )
 
-# Link against required libraries
-target_link_libraries(eigen_tidy_plugin
-    clangTidy
-    clangTidyUtils
-    clangAST
-    clangASTMatchers
-    clangBasic
-    clangFrontend
-    clangLex
-    clangTooling
-    clangSerialization
-    clangDriver
-    clangParse
-    clangSema
-    clangEdit
-    clangAnalysis
-    clangRewrite
-)
+# Link against the monolithic clang-cpp shared library provided by distro packages
+find_library(CLANG_CPP_LIB NAMES clang-cpp "clang-cpp-${LLVM_VERSION_MAJOR}")
+if(NOT CLANG_CPP_LIB)
+    # Fallback to LLVM lib dir if not found in default path
+    find_library(CLANG_CPP_LIB NAMES clang-cpp "clang-cpp-${LLVM_VERSION_MAJOR}" PATHS "${LLVM_PREFIX}/lib" NO_DEFAULT_PATH)
+endif()
+
+if(NOT CLANG_CPP_LIB)
+    message(FATAL_ERROR "Could not find clang-cpp library. Ensure libclang-cpp is installed.")
+endif()
+
+target_link_libraries(eigen_tidy_plugin PRIVATE ${CLANG_CPP_LIB})
 
 # Ensure the plugin doesn't have a lib prefix and uses .so extension
 set_target_properties(eigen_tidy_plugin PROPERTIES
