@@ -58,8 +58,7 @@ jobs:
               cmake ninja-build dpkg-dev build-essential git \
               libeigen3-dev libgtest-dev && \
             cd /workspace && \
-            chmod +x tools/release.sh && \
-            CC=clang CXX=clang++ tools/release.sh --version "$PROJECT_VERSION" 
+            ./tools/release.sh --version "$PROJECT_VERSION"
           '
 
     - name: Show build artifacts
