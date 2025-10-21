@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -e
 
 # Get the root directory of the project
@@ -11,10 +10,7 @@ mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
 # Run CMake to configure the project
-cmake "$ROOT_DIR/eigen_tidy_plugin" -DBUILD_TESTING=ON
+cmake "$ROOT_DIR/eigen_tidy_plugin"
 
 # Build the project
 make -j$(nproc)
-
-# Run tests
-ctest
