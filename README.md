@@ -1,20 +1,7 @@
 # Eigen Tidy Plugin
-
 A clang-tidy plugin for checking Eigen code.
 
-TODOs before making repo public
-- [x] Add docker for dev and installation testing
-- [x] Add dev container setup for development example usage
-- [x] Re-write the workflows with the docker setup (add cd?)
-- [ ] Go through the CPack data
-- [ ] Go through tests and add more
-- [ ] Add for external review
-- [ ] Add a copilot instructions file
-- [ ] Clean up the readmes and make them informative and concise
-
-
 ## Overview
-
 This plugin provides a clang-tidy check `eigen-avoid-auto` to avoid using `auto` with Eigen types.
 
 ## Building
@@ -25,27 +12,26 @@ This plugin provides a clang-tidy check `eigen-avoid-auto` to avoid using `auto`
 - LLVM/Clang development packages
 - For testing:
   - `libeigen3-dev` - Eigen3 development headers
-  - `libgtest-dev` - Google Test framework
 
 #### Installing Dependencies on Ubuntu/Debian:
 
 ```bash
 sudo apt update
-sudo apt install -y cmake clang-tidy llvm-dev libclang-dev libeigen3-dev libgtest-dev
+sudo apt install -y cmake clang-tidy llvm-dev libclang-dev libeigen3-dev
 ```
 
 ### Build Steps
 
 #### Native Build
 ```bash
-./tools/build_and_test.sh
+./tools/build.sh
 ```
 
 #### Docker Build (for consistent environments)
 ```bash
 # Build the container and run tests
 docker build -f tools/Dockerfile --target builder -t eigen-plugin .
-docker run --rm -v $(pwd):/workspace -w /workspace eigen-plugin ./tools/build_and_test.sh
+docker run --rm -v $(pwd):/workspace -w /workspace eigen-plugin ./tools/build.sh
 ```
 
 ## Running
@@ -104,54 +90,5 @@ The plugin can be tested using the provided test files:
 ```bash
 # Test with the basic test cases
 cd eigen_tidy_plugin
-clang-tidy --load ./build/eigen_tidy_plugin.so --checks='-*,eigen-avoid-auto' \
-    tests/test_cases.cpp -- -std=c++17
-
-# Create a simple test file to verify the plugin works
-clang-tidy --load ../../build/eigen_tidy_plugin.so --checks='-*,eigen-avoid-auto' \
-    main.cpp -- -std=c++17 -DMOCK_EIGEN
-
-# Test with real Eigen (if installed)
-clang-tidy --load ../../build/eigen_tidy_plugin.so --checks='-*,eigen-avoid-auto' \
-    main.cpp -- -std=c++17 -I/usr/include/eigen3
-
-# The build_and_test.sh script runs all automated tests
-./tools/build_and_test.sh
-```
-
-## Troubleshooting
-
-### Plugin Loading Issues
-
-If you get "symbol lookup error" when loading the plugin:
-- Ensure you're using the same LLVM/Clang version for building and running
-- Make sure all required development packages are installed
-- Try building with the exact same compiler used to build your clang-tidy
-
-### Build Issues
-
-If CMake can't find LLVM/Clang:
-```bash
-# Find your LLVM installation
-find /usr -name "LLVMConfig.cmake" 2>/dev/null
-find /usr -name "ClangConfig.cmake" 2>/dev/null
-
-# Set the paths explicitly
-cmake .. -DLLVM_DIR=/usr/lib/llvm-18/lib/cmake/llvm \
-         -DClang_DIR=/usr/lib/llvm-18/lib/cmake/clang
-```
-
-### Check Not Found
-
-If clang-tidy can't find the `eigen-avoid-auto` check:
-```bash
-# Verify the plugin loads correctly by testing it
-echo "namespace Eigen { template<class T, int R, int C> class Matrix {}; }" > test.cpp
-echo "void test() { using namespace Eigen; Matrix<double,-1,-1> m; auto x = m; }" >> test.cpp
-clang-tidy --load ./build/eigen_tidy_plugin.so --checks='-*,eigen-avoid-auto' test.cpp -- -std=c++17
-rm test.cpp
-
-# Check that the .so file was built
-ls -la build/eigen_tidy_plugin.so
-file build/eigen_tidy_plugin.so  # Should show it's a shared library
+./tools/test_example_repo_local_build
 ```
