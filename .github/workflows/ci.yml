@@ -53,5 +53,5 @@ jobs:
             set -euxo pipefail; \
             git config --global --add safe.directory /workspace; \
             cd /workspace; \
-          ./tools/build_and_test.sh \
+          ./tools/test_example_repo_local_build.sh \
           "

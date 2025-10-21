@@ -30,7 +30,7 @@ sudo apt install -y cmake clang-tidy llvm-dev libclang-dev libeigen3-dev
 #### Docker Build (for consistent environments)
 ```bash
 # Build the container and run tests
-docker build -f tools/Dockerfile --target builder -t eigen-plugin .
+docker build -f devcontainer/Dockerfile --target builder -t eigen-plugin .
 docker run --rm -v $(pwd):/workspace -w /workspace eigen-plugin ./tools/build.sh
 ```
 

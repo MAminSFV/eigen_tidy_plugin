@@ -56,7 +56,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./tools/Dockerfile
+          file: ./devcontainer/Dockerfile
           target: clang-base
           push: true
           tags: |
