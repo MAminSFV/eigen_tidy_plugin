@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Get the root directory of the project
 ROOT_DIR=$(git rev-parse --show-toplevel)
@@ -14,3 +13,5 @@ cmake "$ROOT_DIR/eigen_tidy_plugin"
 
 # Build the project
 make -j$(nproc)
+
+cd "$ROOT_DIR"
