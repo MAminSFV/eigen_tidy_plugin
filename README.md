@@ -88,7 +88,6 @@ https://libeigen.gitlab.io/eigen/docs-nightly/TopicPitfalls.html [eigen-avoid-au
 The plugin can be tested using the provided test files:
 
 ```bash
-# Test with the basic test cases
-cd eigen_tidy_plugin
+# Test with the example repo
 ./tools/test_example_repo_local_build
 ```
