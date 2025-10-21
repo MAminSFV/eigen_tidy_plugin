@@ -1,8 +1,8 @@
 Checks: "-*,eigen-avoid-auto"
 CheckOptions:
-	- key: eigen-avoid-auto.AllowInRangeFor
-		value: "false"
-	- key: eigen-avoid-auto.OnlyExpressions
-		value: "false"
-	- key: eigen-avoid-auto.BanDecltypeAuto
-		value: "true"
+  - key: eigen-avoid-auto.AllowInRangeFor
+    value: "false"
+  - key: eigen-avoid-auto.OnlyExpressions
+    value: "false"
+  - key: eigen-avoid-auto.BanDecltypeAuto
+    value: "true"
