@@ -1,3 +1,0 @@
-Checks: '-*'
-# This file intentionally disables all checks for the plugin itself
-# The plugin will provide its own checks for end users
