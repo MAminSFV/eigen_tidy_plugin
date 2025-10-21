@@ -1,7 +1,7 @@
 {
   "name": "Eigen Tidy Plugin Dev Container",
   "build": {
-    "dockerfile": "../tools/Dockerfile",
+    "dockerfile": "Dockerfile",
     "context": "..",
     "target": "builder",
     "args": {
