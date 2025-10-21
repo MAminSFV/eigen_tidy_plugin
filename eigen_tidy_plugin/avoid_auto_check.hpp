@@ -7,15 +7,7 @@ namespace clang {
 namespace tidy {
 namespace eigen {
 
-/// Diagnoses usage of 'auto' for variables whose deduced type belongs to the
-/// Eigen namespace, including both plain objects and expression templates.
-///
-/// This check helps avoid common pitfalls with Eigen expression templates
-/// where 'auto' can lead to performance issues or incorrect behavior due to
-/// storing references to temporaries.
-///
-/// For the user-facing documentation see:
-/// http://clang.llvm.org/extra/clang-tidy/checks/eigen-avoid-auto.html
+
 class AvoidAutoCheck : public ClangTidyCheck {
 public:
   AvoidAutoCheck(StringRef Name, ClangTidyContext *Context);
