@@ -24,15 +24,15 @@ AvoidAutoCheck::AvoidAutoCheck(StringRef Name, ClangTidyContext *Context)
   // Read configuration options with defaults
   auto AllowInRangeForOpt = Options.get("AllowInRangeFor");
   AllowInRangeFor = AllowInRangeForOpt.has_value() &&
-    (AllowInRangeForOpt.value() == "true" || AllowInRangeForOpt.value() == "1");
+                    (AllowInRangeForOpt.value() == "true" || AllowInRangeForOpt.value() == "1");
 
   auto OnlyExpressionsOpt = Options.get("OnlyExpressions");
   OnlyExpressions = OnlyExpressionsOpt.has_value() &&
-    (OnlyExpressionsOpt.value() == "true" || OnlyExpressionsOpt.value() == "1");
+                    (OnlyExpressionsOpt.value() == "true" || OnlyExpressionsOpt.value() == "1");
 
   auto BanDecltypeAutoOpt = Options.get("BanDecltypeAuto");
   BanDecltypeAuto = !BanDecltypeAutoOpt.has_value() ||
-    (BanDecltypeAutoOpt.value() != "false" && BanDecltypeAutoOpt.value() != "0");
+                    (BanDecltypeAutoOpt.value() != "false" && BanDecltypeAutoOpt.value() != "0");
 }
 void AvoidAutoCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
   Options.store(Opts, "AllowInRangeFor", AllowInRangeFor);
@@ -45,7 +45,7 @@ void AvoidAutoCheck::registerMatchers(MatchFinder *Finder) {
   auto AutoVarDecl = varDecl(hasType(autoType()), hasInitializer(expr().bind("init"))).bind("var");
 
   auto DecltypeAutoVarDecl =
-    varDecl(hasType(decltypeType()), hasInitializer(expr().bind("init"))).bind("decltype_var");
+      varDecl(hasType(decltypeType()), hasInitializer(expr().bind("init"))).bind("decltype_var");
 
   Finder->addMatcher(AutoVarDecl, this);
 
@@ -161,12 +161,12 @@ void AvoidAutoCheck::check(const MatchFinder::MatchResult &Result) {
   StringRef TypeKeyword = IsDecltypeAuto ? "decltype(auto)" : "auto";
 
   auto Diag =
-    diag(VD->getLocation(), "do not use '%0' for Eigen types or expressions; declare an "
-    "explicit Eigen type or assign the whole expression to a "
-    "concrete type (e.g., (expr).eval() into Eigen::Matrix<>). "
-    "See Eigen pitfalls: "
-    "https://libeigen.gitlab.io/eigen/docs-nightly/TopicPitfalls.html")
-    << TypeKeyword;
+      diag(VD->getLocation(), "do not use '%0' for Eigen types or expressions; declare an "
+                              "explicit Eigen type or assign the whole expression to a "
+                              "concrete type (e.g., (expr).eval() into Eigen::Matrix<>). "
+                              "See Eigen pitfalls: "
+                              "https://libeigen.gitlab.io/eigen/docs-nightly/TopicPitfalls.html")
+      << TypeKeyword;
 
   // Highlight the auto keyword
   Diag << SourceRange(TL.getBeginLoc(), TL.getEndLoc());
