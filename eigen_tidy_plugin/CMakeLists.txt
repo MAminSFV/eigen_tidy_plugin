@@ -26,8 +26,8 @@ include_directories(${LLVM_INCLUDE_DIRS})
 
 # Create the plugin as a MODULE library
 add_library(eigen_tidy_plugin MODULE
-    avoid_auto_check.cpp
-    eigen_module.cpp
+    AvoidAutoCheck.cpp
+    EigenModule.cpp
 )
 
 # Determine LLVM version and paths
@@ -69,6 +69,6 @@ install(TARGETS eigen_tidy_plugin
 )
 
 # Install header files
-install(FILES avoid_auto_check.hpp
+install(FILES AvoidAutoCheck.hpp
     DESTINATION include/eigen-tidy-plugin
 )

@@ -32,6 +32,18 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install clang-format and clang-tidy
+      run: sudo apt-get update && sudo apt-get install -y clang-format clang-tidy
+
+    - name: Check clang-format formatting
+      run: ./tools/clang_format.sh check
+
+    - name: Configure compilation database
+      run: cmake -S eigen_tidy_plugin -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+    - name: Check clang-tidy diagnostics
+      run: ./tools/clang_tidy.sh check build
+
     - name: Compute image name (lowercase)
       id: meta
       shell: bash

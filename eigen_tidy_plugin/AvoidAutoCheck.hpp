@@ -1,12 +1,9 @@
 #pragma once
 
-#include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang-tidy/ClangTidyCheck.h"
+#include "clang/ASTMatchers/ASTMatchFinder.h"
 
-namespace clang {
-namespace tidy {
-namespace eigen {
-
+namespace clang::tidy::eigen {
 
 class AvoidAutoCheck : public ClangTidyCheck {
 public:
@@ -35,6 +32,4 @@ private:
   bool BanDecltypeAuto;
 };
 
-} // namespace eigen
-} // namespace tidy
-} // namespace clang
+} // namespace clang::tidy::eigen

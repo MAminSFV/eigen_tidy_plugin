@@ -5,7 +5,7 @@
 #include "clang/Lex/Lexer.h"
 #include "llvm/Config/llvm-config.h"
 
-#include "avoid_auto_check.hpp"
+#include "AvoidAutoCheck.hpp"
 
 // Compatibility helper for LLVM versions
 // LLVM 15 and earlier use startswith, LLVM 16+ use starts_with
@@ -17,26 +17,24 @@
 
 using namespace clang::ast_matchers;
 
-namespace clang {
-namespace tidy {
-namespace eigen {
+namespace clang::tidy::eigen {
 
-AvoidAutoCheck::AvoidAutoCheck(StringRef Name,
-                                                ClangTidyContext *Context)
+AvoidAutoCheck::AvoidAutoCheck(StringRef Name, ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context) {
   // Read configuration options with defaults
   auto AllowInRangeForOpt = Options.get("AllowInRangeFor");
   AllowInRangeFor = AllowInRangeForOpt.has_value() &&
-                    (AllowInRangeForOpt.value() == "true" || AllowInRangeForOpt.value() == "1");
+    (AllowInRangeForOpt.value() == "true" || AllowInRangeForOpt.value() == "1");
 
   auto OnlyExpressionsOpt = Options.get("OnlyExpressions");
   OnlyExpressions = OnlyExpressionsOpt.has_value() &&
-                    (OnlyExpressionsOpt.value() == "true" || OnlyExpressionsOpt.value() == "1");
+    (OnlyExpressionsOpt.value() == "true" || OnlyExpressionsOpt.value() == "1");
 
   auto BanDecltypeAutoOpt = Options.get("BanDecltypeAuto");
   BanDecltypeAuto = !BanDecltypeAutoOpt.has_value() ||
-                    (BanDecltypeAutoOpt.value() != "false" && BanDecltypeAutoOpt.value() != "0");
-}void AvoidAutoCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
+    (BanDecltypeAutoOpt.value() != "false" && BanDecltypeAutoOpt.value() != "0");
+}
+void AvoidAutoCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
   Options.store(Opts, "AllowInRangeFor", AllowInRangeFor);
   Options.store(Opts, "OnlyExpressions", OnlyExpressions);
   Options.store(Opts, "BanDecltypeAuto", BanDecltypeAuto);
@@ -44,15 +42,10 @@ AvoidAutoCheck::AvoidAutoCheck(StringRef Name,
 
 void AvoidAutoCheck::registerMatchers(MatchFinder *Finder) {
   // Match variable declarations with auto or decltype(auto)
-  auto AutoVarDecl = varDecl(
-      hasType(autoType()),
-      hasInitializer(expr().bind("init"))
-  ).bind("var");
+  auto AutoVarDecl = varDecl(hasType(autoType()), hasInitializer(expr().bind("init"))).bind("var");
 
-  auto DecltypeAutoVarDecl = varDecl(
-      hasType(decltypeType()),
-      hasInitializer(expr().bind("init"))
-  ).bind("decltype_var");
+  auto DecltypeAutoVarDecl =
+    varDecl(hasType(decltypeType()), hasInitializer(expr().bind("init"))).bind("decltype_var");
 
   Finder->addMatcher(AutoVarDecl, this);
 
@@ -96,7 +89,6 @@ void AvoidAutoCheck::check(const MatchFinder::MatchResult &Result) {
   }
 
   // Check if this variable's type was deduced from auto
-  QualType VarType = VD->getType();
   bool IsDeducedAuto = false;
   bool IsDecltypeAuto = false;
 
@@ -168,13 +160,13 @@ void AvoidAutoCheck::check(const MatchFinder::MatchResult &Result) {
   // Emit the diagnostic
   StringRef TypeKeyword = IsDecltypeAuto ? "decltype(auto)" : "auto";
 
-  auto Diag = diag(VD->getLocation(),
-                   "do not use '%0' for Eigen types or expressions; declare an "
-                   "explicit Eigen type or assign the whole expression to a "
-                   "concrete type (e.g., (expr).eval() into Eigen::Matrix<>). "
-                   "See Eigen pitfalls: "
-                   "https://libeigen.gitlab.io/eigen/docs-nightly/TopicPitfalls.html")
-              << TypeKeyword;
+  auto Diag =
+    diag(VD->getLocation(), "do not use '%0' for Eigen types or expressions; declare an "
+    "explicit Eigen type or assign the whole expression to a "
+    "concrete type (e.g., (expr).eval() into Eigen::Matrix<>). "
+    "See Eigen pitfalls: "
+    "https://libeigen.gitlab.io/eigen/docs-nightly/TopicPitfalls.html")
+    << TypeKeyword;
 
   // Highlight the auto keyword
   Diag << SourceRange(TL.getBeginLoc(), TL.getEndLoc());
@@ -214,7 +206,8 @@ bool AvoidAutoCheck::isInEigenNamespace(const CXXRecordDecl *RD) const {
   while (DC) {
     if (const auto *ND = dyn_cast<NamespaceDecl>(DC)) {
       if (ND->getName() == "Eigen") {
-        // Check if this is the top-level Eigen namespace (not nested in another namespace)
+        // Check if this is the top-level Eigen namespace (not nested in another
+        // namespace)
         const DeclContext *Parent = ND->getParent();
         if (Parent && isa<TranslationUnitDecl>(Parent)) {
           return true;
@@ -252,8 +245,8 @@ bool AvoidAutoCheck::isEigenPlainObject(const Type *Ty) const {
   }
 
   // Check if this class derives from Eigen::PlainObjectBase
-  // This is a heuristic - we look for inheritance from classes named PlainObjectBase
-  // in the Eigen namespace
+  // This is a heuristic - we look for inheritance from classes named
+  // PlainObjectBase in the Eigen namespace
   for (const CXXBaseSpecifier &Base : RD->bases()) {
     QualType BaseType = Base.getType();
     if (const auto *BaseRT = BaseType->getAs<RecordType>()) {
@@ -282,6 +275,4 @@ bool AvoidAutoCheck::isEigenPlainObject(const Type *Ty) const {
   return false;
 }
 
-} // namespace eigen
-} // namespace tidy
-} // namespace clang
+} // namespace clang::tidy::eigen
