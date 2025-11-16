@@ -27,7 +27,6 @@ private:
   bool isEigenPlainObject(const Type *Ty) const;
 
   /// Configuration options
-  bool AllowInRangeFor;
   bool OnlyExpressions;
   bool BanDecltypeAuto;
 };

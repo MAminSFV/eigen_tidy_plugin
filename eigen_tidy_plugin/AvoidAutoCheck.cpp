@@ -22,10 +22,6 @@ namespace clang::tidy::eigen {
 AvoidAutoCheck::AvoidAutoCheck(StringRef Name, ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context) {
   // Read configuration options with defaults
-  auto AllowInRangeForOpt = Options.get("AllowInRangeFor");
-  AllowInRangeFor = AllowInRangeForOpt.has_value() &&
-                    (AllowInRangeForOpt.value() == "true" || AllowInRangeForOpt.value() == "1");
-
   auto OnlyExpressionsOpt = Options.get("OnlyExpressions");
   OnlyExpressions = OnlyExpressionsOpt.has_value() &&
                     (OnlyExpressionsOpt.value() == "true" || OnlyExpressionsOpt.value() == "1");
@@ -35,17 +31,23 @@ AvoidAutoCheck::AvoidAutoCheck(StringRef Name, ClangTidyContext *Context)
                     (BanDecltypeAutoOpt.value() != "false" && BanDecltypeAutoOpt.value() != "0");
 }
 void AvoidAutoCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
-  Options.store(Opts, "AllowInRangeFor", AllowInRangeFor);
   Options.store(Opts, "OnlyExpressions", OnlyExpressions);
   Options.store(Opts, "BanDecltypeAuto", BanDecltypeAuto);
 }
 
 void AvoidAutoCheck::registerMatchers(MatchFinder *Finder) {
   // Match variable declarations with auto or decltype(auto)
-  auto AutoVarDecl = varDecl(hasType(autoType()), hasInitializer(expr().bind("init"))).bind("var");
+  // Match both direct auto and references to auto (auto&, auto&&)
+  auto AutoVarDecl = varDecl(
+      anyOf(hasType(autoType()),
+            hasType(referenceType(pointee(autoType())))),
+      hasInitializer(expr().bind("init"))).bind("var");
 
   auto DecltypeAutoVarDecl =
-      varDecl(hasType(decltypeType()), hasInitializer(expr().bind("init"))).bind("decltype_var");
+      varDecl(
+          anyOf(hasType(decltypeType()),
+                hasType(referenceType(pointee(decltypeType())))),
+          hasInitializer(expr().bind("init"))).bind("decltype_var");
 
   Finder->addMatcher(AutoVarDecl, this);
 
@@ -68,18 +70,6 @@ void AvoidAutoCheck::check(const MatchFinder::MatchResult &Result) {
   // Skip if in system header
   if (Result.Context->getSourceManager().isInSystemHeader(VD->getLocation())) {
     return;
-  }
-
-  // Check if this is a range-based for loop variable and we allow it
-  if (AllowInRangeFor) {
-    // Check if the variable is declared in a range-based for loop
-    // We need to look at the parent statements to find a CXXForRangeStmt
-    auto Parents = Result.Context->getParents(*VD);
-    for (const auto &Parent : Parents) {
-      if (Parent.get<CXXForRangeStmt>()) {
-        return;
-      }
-    }
   }
 
   // Verify the variable was actually spelled with auto/decltype(auto)
@@ -124,17 +114,6 @@ void AvoidAutoCheck::check(const MatchFinder::MatchResult &Result) {
 
   // Get the deduced type
   QualType DeducedType = VD->getType();
-
-  // Check if the initializer is a call to .eval() - this should be allowed
-  if (const Expr *Init = VD->getInit()) {
-    if (const auto *Call = dyn_cast<CXXMemberCallExpr>(Init)) {
-      if (const auto *Method = dyn_cast<CXXMethodDecl>(Call->getDirectCallee())) {
-        if (Method->getName() == "eval") {
-          return; // Allow auto with .eval() calls
-        }
-      }
-    }
-  }
 
   // Strip references, pointers, and cv-qualifiers
   DeducedType = DeducedType.getCanonicalType();
