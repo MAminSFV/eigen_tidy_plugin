@@ -32,12 +32,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install clang-format and clang-tidy
-      run: sudo apt-get update && sudo apt-get install -y clang-format clang-tidy
-
-    - name: Check clang-format formatting
-      run: ./tools/clang_format.sh check
-
     - name: Configure compilation database
       run: cmake -S eigen_tidy_plugin -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
@@ -57,13 +51,23 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Check clang format style adherence
+      run: |
+        docker run --rm -v ${{ github.workspace }}:/workspace \
+          ghcr.io/${{ steps.meta.outputs.image_name }}:clang-${{ matrix.clang-version }}-${{ matrix.ubuntu-version }} \
+          bash -c "\
+            set -euxo pipefail; \
+            cd /workspace; \
+            find . -type f \( -name '*.hpp' -o -name '*.cpp' \) -print0 | xargs -0 -r clang-format \
+            --style=file --dry-run --Werror; \
+          "
+
     - name: Build and Test with Clang ${{ matrix.clang-version }} on ${{ matrix.ubuntu-version }}
       run: |
         docker run --rm -v ${{ github.workspace }}:/workspace \
           ghcr.io/${{ steps.meta.outputs.image_name }}:clang-${{ matrix.clang-version }}-${{ matrix.ubuntu-version }} \
           bash -c "\
             set -euxo pipefail; \
-            git config --global --add safe.directory /workspace; \
             cd /workspace; \
           ./tools/test_example_repo_local_build.sh \
           "
