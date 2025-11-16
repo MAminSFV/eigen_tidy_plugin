@@ -9,7 +9,7 @@ mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
 # Run CMake to configure the project
-cmake "$ROOT_DIR/eigen_tidy_plugin"
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$ROOT_DIR/eigen_tidy_plugin"
 
 # Build the project
 make -j$(nproc)

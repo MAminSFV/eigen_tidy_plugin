@@ -1,0 +1,4 @@
+# Taken from:
+BasedOnStyle: LLVM
+QualifierAlignment: Left
+ColumnLimit: 100

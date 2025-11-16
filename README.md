@@ -2,7 +2,7 @@
 A clang-tidy plugin for checking Eigen code.
 
 ## Overview
-This plugin provides a clang-tidy check `eigen-avoid-auto` to avoid using `auto` with Eigen types.
+This plugin provides a clang-tidy check `eigen-avoid-auto` to avoid using `auto` with Eigen types and expressions.
 
 ## Building
 
@@ -12,6 +12,8 @@ This plugin provides a clang-tidy check `eigen-avoid-auto` to avoid using `auto`
 - LLVM/Clang development packages
 - For testing:
   - `libeigen3-dev` - Eigen3 development headers
+
+For more details, please have a look at the dockerfile under `./devcontainer`.
 
 #### Installing Dependencies on Ubuntu/Debian:
 
@@ -34,7 +36,7 @@ docker build -f devcontainer/Dockerfile --target builder -t eigen-plugin .
 docker run --rm -v $(pwd):/workspace -w /workspace eigen-plugin ./tools/build.sh
 ```
 
-## Running
+## Running the plugin with clang-tidy
 
 The build script automatically runs the tests. To manually test the plugin:
 
@@ -91,3 +93,8 @@ The plugin can be tested using the provided test files:
 # Test with the example repo
 ./tools/test_example_repo_local_build
 ```
+
+## References
+1. [Eigen common pitfalls]()
+2. [Clang-tidy documentation](https://clang.llvm.org/extra/clang-tidy/Contributing.html#out-of-tree-check-plugins)
+3. [External Clang-Tidy Examples](https://clang.llvm.org/extra/clang-tidy/ExternalClang-TidyExamples.html#external-clang-tidy-examples)

@@ -38,6 +38,7 @@ RUN echo "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_relea
         git \
         libeigen3-dev \
         libgtest-dev \
+        clang-format \
     && rm -rf /var/lib/apt/lists/*
 
 # Ensure clang and llvm tools are the right version
@@ -65,10 +66,6 @@ RUN ln -sf /usr/bin/clang-${CLANG_VERSION} /usr/bin/clang && \
 # Build setup
 WORKDIR /src
 COPY . .
-
-# Build using project release script (uses CMake, CPack, tests)
-RUN tools/release.sh -t Release
-
 
 # ===============================
 # Stage 3: Runtime / Artifacts
