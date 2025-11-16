@@ -38,16 +38,15 @@ void AvoidAutoCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
 void AvoidAutoCheck::registerMatchers(MatchFinder *Finder) {
   // Match variable declarations with auto or decltype(auto)
   // Match both direct auto and references to auto (auto&, auto&&)
-  auto AutoVarDecl = varDecl(
-      anyOf(hasType(autoType()),
-            hasType(referenceType(pointee(autoType())))),
-      hasInitializer(expr().bind("init"))).bind("var");
+  auto AutoVarDecl =
+      varDecl(anyOf(hasType(autoType()), hasType(referenceType(pointee(autoType())))),
+              hasInitializer(expr().bind("init")))
+          .bind("var");
 
   auto DecltypeAutoVarDecl =
-      varDecl(
-          anyOf(hasType(decltypeType()),
-                hasType(referenceType(pointee(decltypeType())))),
-          hasInitializer(expr().bind("init"))).bind("decltype_var");
+      varDecl(anyOf(hasType(decltypeType()), hasType(referenceType(pointee(decltypeType())))),
+              hasInitializer(expr().bind("init")))
+          .bind("decltype_var");
 
   Finder->addMatcher(AutoVarDecl, this);
 
