@@ -1,6 +1,4 @@
 # Taken from:
-# https://github.com/llvm/llvm-project/blob/main/clang-tools-extra/clang-tidy/.clang-format
 BasedOnStyle: LLVM
 QualifierAlignment: Left
-LineEnding: LF
 ColumnLimit: 100
